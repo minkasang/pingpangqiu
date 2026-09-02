@@ -266,3 +266,13 @@ canvas {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
+
+/* 旋转轴顶端的 ω 标注（drei Html 渲染在 DOM 层） */
+.axis-label {
+  color: #fbbf24;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 600;
+  user-select: none;
+  pointer-events: none;
+}

@@ -4,10 +4,13 @@ import { FLOOR_Y } from '../physics/constants'
 import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
 import { Ball } from './Ball'
+import { BallOverlays } from './BallOverlays'
 import { CameraRig } from './CameraRig'
 import { Lighting } from './Lighting'
+import { PhysicsDebug } from './PhysicsDebug'
 import { Racket } from './Racket'
 import { Table } from './Table'
+import { TrajectoryTrail } from './TrajectoryTrail'
 
 /** 按真实帧间隔推进物理；慢放只改变推进量，不改变定步长，保证可复现 */
 function SimRunner() {
@@ -52,6 +55,9 @@ export function Scene() {
       <Table />
       <Racket />
       <Ball />
+      <BallOverlays />
+      <TrajectoryTrail />
+      <PhysicsDebug />
 
       <SimRunner />
       <CameraRig />
