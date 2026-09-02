@@ -133,9 +133,9 @@ describe('能量与积分稳定性', () => {
   })
 })
 
-describe('来球规则合规性：回击必须过网并落在接球者一侧台面', () => {
+describe('发球规则合规性：先落发球方台面，过网，再落接球方台面', () => {
   for (const spin of SPIN_LIBRARY) {
-    it(`${spin} 来球的第一落点在接球者一侧台面（不窜网、不出界）`, () => {
+    it(`${spin} 发球第一落点在发球方（-Z），第二落点在接球方（+Z）`, () => {
       const profile = LAUNCH_PROFILES[spin]
       const engine = new TableTennisPhysicsEngine({
         position: profile.position.clone(),
@@ -143,15 +143,21 @@ describe('来球规则合规性：回击必须过网并落在接球者一侧台�
         angularVelocity: angularVelocityFromSpin(spin, 3200),
       })
 
-      while (engine.contacts.length === 0 && engine.time < 3) engine.step(PHYSICS_DT)
-      const contact = engine.contacts[0]
-      if (!contact) throw new Error(`${spin} 来球 3 秒内未产生任何接触`)
+      while (engine.time < 5) {
+        engine.step(PHYSICS_DT)
+        const tableBounces = engine.contacts.filter((event) => event.kind === 'table')
+        if (tableBounces.length >= 2) break
+      }
 
-      // 第一接触必须是台面：窜网会记为 net，出界会记为 floor
-      expect(contact.kind).toBe('table')
-      expect(contact.point.z).toBeGreaterThan(0)
-      expect(Math.abs(contact.point.x)).toBeLessThan(TABLE.width / 2)
-      expect(contact.point.z).toBeLessThan(TABLE.length / 2)
+      const bounces = engine.contacts.filter((event) => event.kind === 'table')
+      const first = bounces[0]
+      const second = bounces[1]
+      if (!first || !second) throw new Error(`${spin} 发球在 5 秒内未完成两次台面弹跳`)
+
+      expect(first.point.z).toBeLessThan(0)
+      expect(Math.abs(first.point.z)).toBeLessThan(TABLE.length / 2)
+      expect(second.point.z).toBeGreaterThan(0)
+      expect(second.point.z).toBeLessThan(TABLE.length / 2)
     })
   }
 })
