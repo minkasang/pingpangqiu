@@ -1,0 +1,156 @@
+# 乒乓球旋转实验室 Phase 1 — 物理沙盒 实施计划
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans 逐任务实现本计划。
+
+**Goal:** 搭出一个可运行、可暂停/慢放、方向完全正确的 3D 乒乓球物理沙盒：统一旋转向量驱动 Magnus 弯曲、球台反弹与旋转衰减，并用单元测试锁死所有物理方向。
+
+**Architecture:** 物理真相由纯 TS 的 `TableTennisPhysicsEngine` 拥有（定步长积分、力、接触求解、事件记录），React 层只做可视化；Rapier 只提供碰撞检测（接触点/法线/事件），碰撞响应一律由自研 solver 算完写回。物理层不 import React/Three 组件，只用 `three` 的 Vector3，保证可在 vitest 中裸跑。
+
+**Tech Stack:** React 19 + TypeScript + Vite + Three.js + @react-three/fiber + @react-three/drei + @react-three/rapier + Zustand + Vitest
+
+---
+
+## 0. 已确认的关键决策
+
+| 决策 | 选择 |
+|---|---|
+| Rapier 分工 | Rapier 管刚体/几何/**碰撞检测**；自研 solver 管反弹、摩擦冲量、旋转传递 |
+| UI 文案 | 全中文（含「马格努斯力」「旋转轴」等） |
+| 本次范围 | Phase 1 物理沙盒，跑通并验证方向后再进 Phase 2 |
+
+## 1. 坐标系约定（全局唯一，任何文件不得另立）
+
+```
++X  接球者右手方向（球台宽度方向）
++Y  竖直向上
++Z  接球者一侧（来球从 -Z 飞向 +Z）
+```
+
+- 单位：米 / 秒 / 千克 / 弧度每秒
+- 原点：球台台面中心；台面 `y = 0`，地面 `y = -0.76`
+- 球台：长 `2.74`（Z）× 宽 `1.525`（X），球网高 `0.1525`
+- 球：半径 `R = 0.02`，质量 `m = 0.0027`，转动惯量 `I = 2/3·m·R²`（空心薄壳）
+
+## 2. 统一旋转向量 —— 7 种旋转只是不同的 ω 向量
+
+球沿 `+Z` 飞行（`v = (0,0,+v)`）时：
+
+| 旋转 | ω 向量 | 物理含义 |
+|---|---|---|
+| 无旋 | `(0,0,0)` | — |
+| 上旋 | `(+ω,0,0)` | 球顶朝 +Z 走 |
+| 下旋 | `(−ω,0,0)` | 球顶朝 −Z 走 |
+| 左侧旋 | `(0,−ω,0)` | 轨迹向接球者左侧（−X）弯 |
+| 右侧旋 | `(0,+ω,0)` | 轨迹向接球者右侧（+X）弯 |
+| 侧上旋 | `normalize(+a,+b,0)·ω` | 上旋 + 右旋组合 |
+| 侧下旋 | `normalize(−a,+b,0)·ω` | 下旋 + 右旋组合 |
+
+**方向自检（F_magnus ∝ ω × v）：**
+
+- 上旋 `ω=(ωx,0,0)`：`ω×v = (0·v−0, 0−ωx·v, 0) = (0,−ωx·v,0)` → **−Y 向下**，上旋下沉 ✓
+- 右侧旋 `ω=(0,ωy,0)`：`ω×v = (ωy·v, 0, 0)` → **+X**，向接球者右手边弯 ✓
+
+## 3. 力模型
+
+- 重力：`F_g = m·g`，`g = (0,−9.81,0)`
+- 空气阻力：`F_d = −½·ρ·C_d·A·|v|·v`，`ρ=1.225`，`C_d=0.5`，`A=πR²`
+- 马格努斯力：`F_m = K·(ω × v)`，`K = ½·ρ·C_L′·A·R ≈ 1.5e-5`（单一可调系数，集中放常量表）
+
+量级标定：`ω = 3000 rpm (314 rad/s)`、`v = 10 m/s` →
+`|F_m| = 1.5e-5 × 314 × 10 ≈ 0.047 N`，对比 `m·g = 0.0265 N` ≈ **1.8 倍重力**。
+乒乓球弯折确实强于重力，量级合理；`v = 10` 时阻力 `≈ 0.039 N ≈ 1.5 倍重力`，同样合理。
+
+## 4. 接触求解（球台与球拍共用同一套公式）
+
+```
+r_c = −R·n                      球心 → 接触点
+法向：  v_n′ = −e·v_n            e_table ≈ 0.80，e_racket ≈ 0.55
+切向滑移： u = (v − v_拍) 的切向分量 + ω × r_c
+止滑所需冲量： J_stop = |u| / (1/m + R²/I) = 0.4·m·|u|   （因 I = ⅔mR²）
+摩擦冲量： J_t = min(μ·J_n, J_stop)，方向 = −û
+写回： v += (J_t/m)·(−û) + 法向分量
+       ω += (r_c × J) / I
+```
+
+**上旋落台「往前窜」自检**（`ω=(+ωx,0,0)`、`v=(0,0,+v)`、`n=+Y`、`r_c=(0,−R,0)`）：
+
+- `ω × r_c = (0,0,−ωx·R)`
+- `u = (0, 0, v − ωx·R)`；强上旋时 `ωx·R > v` → `u` 指向 −Z
+- 摩擦冲量沿 +Z → **水平速度增大**（前窜）✓
+- `r_c × J = (−R·J_t, 0, 0)` → `ωx` 减小 → **转速衰减** ✓
+
+**禁止**出现 `if (topspin) ball.y += x` 这类写死效果。
+
+## 5. 文件布局
+
+```
+src/
+  physics/
+    constants.ts     坐标系、尺寸、物理系数（唯一真源）
+    types.ts         BallState / SpinType / ContactInfo / ContactEvent
+    spin.ts          SpinType <-> angularVelocity（统一旋转向量）
+    forces.ts        重力 / 阻力 / Magnus
+    contact.ts       法向 + 切向摩擦冲量求解（台 / 拍通用）
+    engine.ts        TableTennisPhysicsEngine：定步长积分、事件、轨迹采样
+    *.test.ts        方向正确性测试（vitest）
+  scene/
+    Scene.tsx  Table.tsx  Ball.tsx  Racket.tsx
+    SpinAxis.tsx  RotationRing.tsx  VectorArrow.tsx  TrajectoryTrail.tsx
+    Lighting.tsx  PhysicsDebug.tsx
+  state/useSimStore.ts   Zustand
+  ui/
+    SpinLibrary.tsx  PhysicsInspector.tsx  Timeline.tsx  TopBar.tsx
+```
+
+## 6. 任务
+
+### Task 1 — 脚手架与依赖
+- Create: `package.json` `tsconfig.json` `vite.config.ts` `index.html` `src/main.tsx` `src/App.tsx`
+- 安装：react 19 / three 0.185 / @react-three/fiber 9 / drei 10 / rapier 2 / zustand 5 / vite 7 / typescript 5.9 / vitest 3 / @vitejs/plugin-react 5
+- `git init` + 首次提交
+- Verify: `pnpm build` exit 0；`pnpm vitest run` 能跑
+
+### Task 2 — 物理地基（constants + types + spin）
+- Create: `src/physics/constants.ts` `src/physics/types.ts` `src/physics/spin.ts` `src/physics/spin.test.ts`
+- Verify: `pnpm vitest run src/physics/spin.test.ts` — 7 种旋转的 ω 方向、RPM 换算、上旋 Magnus 向下、右旋 Magnus 向 +X
+
+### Task 3 — 力模型（forces）
+- Create: `src/physics/forces.ts` `src/physics/forces.test.ts`
+- Verify: 阻力与速度反向；Magnus 与 v、ω 垂直；3000rpm/10ms⁻¹ 量级落在 0.03–0.07 N
+
+### Task 4 — 接触求解（contact）
+- Create: `src/physics/contact.ts` `src/physics/contact.test.ts`
+- Verify: 上旋落台水平加速 + 转速下降；下旋落台水平减速；右旋落台产生 +X 横向速度；法向反弹 e 正确
+
+### Task 5 — 引擎（engine）
+- Create: `src/physics/engine.ts` `src/physics/engine.test.ts`
+- 定步长 `dt = 1/600`，子步进；轨迹采样；接触事件记录（before/after 状态）
+- Verify: 上旋弹跳距离 < 下旋弹跳距离（同入射角）；无旋球对称；能量单调不增
+
+### Task 6 — 最小 R3F 场景
+- Create: `src/scene/Scene.tsx` `Table.tsx` `Ball.tsx` `Lighting.tsx` `src/state/useSimStore.ts`
+- Verify: `pnpm dev` 打开可见球台与飞行中的球，OrbitControls 可 360° 转
+
+### Task 7 — Rapier 接触检测接入
+- 先读 `node_modules/@react-three/rapier` 源码确认手动 step 与 collision event payload 形状
+- Verify: 球落台时控制台打印接触点/法线，且法线 ≈ +Y
+
+### Task 8 — 旋转可视化
+- Create: `SpinAxis.tsx` `RotationRing.tsx`，球表面色环 + 标记点
+- Verify: 切换旋转类型，轴与环方向实时变化；上旋轴指向 +X
+
+### Task 9 — 力矢量与轨迹
+- Create: `VectorArrow.tsx` `TrajectoryTrail.tsx`
+- Verify: 打开力显示后 v / Fm / Fd / Fg 箭头方向符合第 2 节表
+
+### Task 10 — 播放控制与 Timeline
+- Create: `Timeline.tsx`（0.05x–1x、逐帧、拖动、Restart）
+- Verify: 暂停后逐帧前进一帧 = 1/600 s；慢放下轨迹不变
+
+### Task 11 — Spin Library + Physics Inspector
+- Create: `SpinLibrary.tsx` `PhysicsInspector.tsx`（Beginner / Physics 双模式）
+- Verify: 点击 7 种旋转之一 → 预览 → Run Simulation 出球
+
+### Task 12 — Physics Debug + 方向总复核
+- Create: `PhysicsDebug.tsx`（collider / 接触点 / 法线 / 各矢量 / 轨迹采样点）
+- Verify: 逐条核对第 2、3、4 节的方向自检，全部与画面一致；`pnpm build` + 全量测试通过
