@@ -1,4 +1,4 @@
-import { Vector3 } from 'three'
+import { Quaternion, Vector3 } from 'three'
 import { BALL, BALL_INERTIA, PHYSICS_DT } from './constants'
 import { resolveContact } from './contact'
 import { dragForce, gravityForce, magnusForce } from './forces'
@@ -16,6 +16,8 @@ export interface EngineSetup {
 
 const _force = new Vector3()
 const _step = new Vector3()
+const _axis = new Vector3()
+const _rotation = new Quaternion()
 
 /**
  * 物理真相的唯一持有者。只负责积分与接触响应，不做任何渲染相关的事情，
@@ -27,6 +29,11 @@ const _step = new Vector3()
  */
 export class TableTennisPhysicsEngine {
   readonly state: BallState
+  /**
+   * 球的姿态。虽然只用于显示，但必须和物理时间同步推进，
+   * 否则慢放 / 逐帧时表面标记的转动速度会和实际转速不一致。
+   */
+  readonly orientation = new Quaternion()
   time = 0
   trajectory: TrajectorySample[] = []
   contacts: ContactEvent[] = []
@@ -59,6 +66,7 @@ export class TableTennisPhysicsEngine {
     this.state.position.copy(this.setup.position)
     this.state.velocity.copy(this.setup.velocity)
     this.state.angularVelocity.copy(this.setup.angularVelocity)
+    this.orientation.identity()
     this.time = 0
     this.accumulator = 0
     this.nextSampleTime = 0
@@ -94,8 +102,18 @@ export class TableTennisPhysicsEngine {
     this.time += dt
 
     // 飞行中无外力矩，角速度保持不变（马格努斯力不做功）
+    this.advanceOrientation(dt)
     this.resolveContacts()
     this.maybeRecordSample()
+  }
+
+  private advanceOrientation(dt: number): void {
+    const { angularVelocity } = this.state
+    const speed = angularVelocity.length()
+    if (speed < 1e-9) return
+    _axis.copy(angularVelocity).divideScalar(speed)
+    _rotation.setFromAxisAngle(_axis, speed * dt)
+    this.orientation.premultiply(_rotation)
   }
 
   private resolveContacts(): void {

@@ -5,7 +5,7 @@ import { AIR, BALL, GRAVITY, MAGNUS_COEFFICIENT } from './constants'
 export const BALL_AREA = Math.PI * BALL.radius ** 2
 
 /** 重力 F_g = m·g，方向 -Y */
-export function gravityForce(mass = BALL.mass, out = new Vector3()): Vector3 {
+export function gravityForce(mass: number = BALL.mass, out = new Vector3()): Vector3 {
   return out.set(0, GRAVITY * mass, 0)
 }
 
@@ -27,7 +27,12 @@ export function magnusForce(angularVelocity: Vector3, velocity: Vector3, out = n
 }
 
 /** 某一时刻作用在球上的合力 */
-export function totalForce(angularVelocity: Vector3, velocity: Vector3, mass = BALL.mass, out = new Vector3()): Vector3 {
+export function totalForce(
+  angularVelocity: Vector3,
+  velocity: Vector3,
+  mass: number = BALL.mass,
+  out = new Vector3(),
+): Vector3 {
   gravityForce(mass, out)
   out.add(dragForce(velocity))
   out.add(magnusForce(angularVelocity, velocity))

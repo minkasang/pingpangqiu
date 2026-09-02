@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Vector3 } from 'three'
-import { dragForce, gravityForce, magnusForce } from './forces'
-import { BALL, GRAVITY } from './constants'
+import { BALL_AREA, dragForce, gravityForce, magnusForce } from './forces'
+import { AIR, BALL, GRAVITY } from './constants'
 import { angularVelocityFromSpin } from './spin'
 
 describe('重力', () => {
@@ -47,11 +47,32 @@ describe('马格努斯力', () => {
     expect(f.dot(v)).toBeCloseTo(0, 12)
   })
 
-  it('3000 rpm / 10 m/s 时量级约 0.047 N（约 1.8 倍重力）', () => {
+  it('隐含升力系数落在乒乓球实测范围（C_L ≈ 0.1~0.3）', () => {
     const omega = angularVelocityFromSpin('topspin', 3000)
-    const f = magnusForce(omega, new Vector3(0, 0, 10))
-    expect(f.length()).toBeGreaterThan(0.03)
-    expect(f.length()).toBeLessThan(0.07)
+    const v = new Vector3(0, 0, 10)
+    const f = magnusForce(omega, v)
+    const cl = f.length() / (0.5 * AIR.density * BALL_AREA * v.lengthSq())
+    const spinRatio = (omega.length() * BALL.radius) / v.length()
+
+    expect(spinRatio).toBeGreaterThan(0.5)
+    expect(cl).toBeGreaterThan(0.05)
+    expect(cl).toBeLessThan(0.4)
+  })
+
+  it('升力系数与旋转参数成正比（一阶马格努斯模型的定义性质）', () => {
+    const probe = (rpm: number, speed: number) => {
+      const omega = angularVelocityFromSpin('topspin', rpm)
+      const q = 0.5 * AIR.density * BALL_AREA * speed ** 2
+      const cl = magnusForce(omega, new Vector3(0, 0, speed)).length() / q
+      const spinRatio = (omega.length() * BALL.radius) / speed
+      return cl / spinRatio
+    }
+    expect(probe(3000, 10)).toBeCloseTo(probe(6000, 15), 9)
+  })
+
+  it('6000 rpm / 15 m/s 时马格努斯力超过重力（强上旋会明显下扎）', () => {
+    const f = magnusForce(angularVelocityFromSpin('topspin', 6000), new Vector3(0, 0, 15))
+    expect(f.length()).toBeGreaterThan(BALL.mass * 9.81)
   })
 
   it('转速为零时马格努斯力为零', () => {

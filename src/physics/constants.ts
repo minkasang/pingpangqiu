@@ -41,11 +41,18 @@ export const AIR = {
 } as const
 
 /**
- * Magnus 系数 K，F_m = K · (ω × v)。
- * 由 ½·ρ·C_L'·A·R 推导，取值使 3000 rpm / 10 m·s⁻¹ 时 F_m ≈ 0.047 N
- * （约 1.8 倍重力，与乒乓球实际弯折量级一致）。集中在此便于标定。
+ * Magnus 系数 K，F_m = K · (ω × v)，等价于一阶升力模型 C_L = C_L'·S
+ * （S = ωR/v 为旋转参数）。
+ *
+ * 标定依据：乒乓球实测 C_L 在 S ≈ 0.6~0.9 时约为 0.15~0.22。
+ * 由 K = ½·ρ·A·C_L'·R 且 C_L' = C_L/S ≈ 0.24 得
+ *   K = 0.5 × 1.225 × 1.257e-3 × 0.24 × 0.02 ≈ 3.7e-6
+ * 取 4.0e-6。校验：6000 rpm / 15 m·s⁻¹ 时 F_m ≈ 0.038 N，约 1.4 倍重力，
+ * 与强上旋弧圈球明显下扎的实际观感一致。
+ *
+ * 注意：这是唯一需要标定的系数，改这里即可整体调整弯曲强度。
  */
-export const MAGNUS_COEFFICIENT = 1.5e-5
+export const MAGNUS_COEFFICIENT = 4.0e-6
 
 export const SURFACE = {
   table: { restitution: 0.8, friction: 0.25 },
