@@ -1,5 +1,3 @@
-import { Vector3 } from 'three'
-
 /**
  * 颜色只表达物理含义，不随页面变化：
  *   速度类 = 蓝/青系（合速度与三个分量同族不同色，面板色块一一对应）
@@ -47,6 +45,3 @@ export const CAMERA_LABELS: Record<CameraPreset, string> = {
 export const CAMERA_ORDER: CameraPreset[] = ['player', 'side', 'top', 'ball', 'contact', 'free']
 
 export type InspectorMode = 'beginner' | 'physics'
-
-/** Phase 1 球拍为静态展示，放在接球者一侧偏右，不挡球路 */
-export const RACKET_POSITION = new Vector3(0.52, 0.3, 1.32)

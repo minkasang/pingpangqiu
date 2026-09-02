@@ -1,6 +1,7 @@
 import { Vector3 } from 'three'
-import { AIR, BALL } from '../physics/constants'
+import { AIR, BALL, SURFACE } from '../physics/constants'
 import { dragForce, magnusForce } from '../physics/forces'
+import { computeRacketVelocity, RACKET_ACTION_LABEL } from '../physics/racket'
 import { rpmOf, SPIN_LABEL } from '../physics/spin'
 import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
@@ -42,6 +43,12 @@ function describeSpeed(speed: number): string {
   return '较慢'
 }
 
+function describePitch(deg: number): string {
+  if (deg > 5) return '后仰'
+  if (deg < -5) return '前倾'
+  return '竖直'
+}
+
 /** 右侧实时数据面板。Beginner 模式只给结论，Physics 模式给完整数字 */
 export function PhysicsInspector() {
   useLiveTick(15)
@@ -58,7 +65,7 @@ export function PhysicsInspector() {
   const axis = angularVelocity.lengthSq() > 1e-12 ? angularVelocity.clone().normalize() : ZERO
 
   return (
-    <aside className="panel panel-right">
+    <aside className="panel panel-racket">
       <div className="mode-switch">
         {(['beginner', 'physics'] as const).map((mode) => (
           <button
@@ -99,6 +106,11 @@ export function PhysicsInspector() {
             <Row label="重力" value={`${fmt(gravity * 1000, 1)} mN`} color={PALETTE.forceGravity} />
             <Row label="马格努斯/重力" value={`${fmt(magnus.length() / gravity, 2)} ×`} />
           </Section>
+          <Section title="球拍">
+            <RacketInfo />
+            <Row label="胶皮摩擦" value={fmt(SURFACE.racket.friction, 2)} color={PALETTE.friction} />
+            <Row label="胶皮恢复" value={fmt(SURFACE.racket.restitution, 2)} />
+          </Section>
           <Section title="环境">
             <Row label="空气密度" value={`${AIR.density} kg/m³`} />
             <Row label="模拟时间" value={`${fmt(engine.time)} s`} />
@@ -106,5 +118,19 @@ export function PhysicsInspector() {
         </>
       )}
     </aside>
+  )
+}
+
+function RacketInfo() {
+  const control = useSimStore((s) => s.racketControl)
+  const velocity = computeRacketVelocity(control.action, control.speed)
+  return (
+    <>
+      <Row label="动作" value={RACKET_ACTION_LABEL[control.action]} />
+      <Row label="拍面" value={`${control.pitchDeg.toFixed(0)}° · ${describePitch(control.pitchDeg)}`} />
+      <Row label="偏转" value={`${control.yawDeg.toFixed(0)}°`} />
+      <Row label="位置" value={`[${control.x.toFixed(2)}, ${control.y.toFixed(2)}, ${control.z.toFixed(2)}] m`} />
+      <Row label="触拍速度" value={fmtVec(velocity)} color="#e2e8f0" />
+    </>
   )
 }

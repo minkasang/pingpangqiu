@@ -83,9 +83,26 @@ canvas {
   left: 16px;
 }
 
-.panel-right {
+/* 右侧两个面板的容器：上下排布，各自撑满一半空间 */
+.right-side {
+  position: absolute;
+  top: 16px;
   right: 16px;
+  bottom: 16px;
   width: 248px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.right-side > .panel {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: auto;
+  max-height: none;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .panel h2 {
@@ -322,4 +339,66 @@ canvas {
   font-weight: 600;
   user-select: none;
   pointer-events: none;
+}
+
+/* ---------- 球拍控制面板 ---------- */
+
+.racket-section {
+  margin-top: 10px;
+}
+
+.racket-section h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6f7b8b;
+  letter-spacing: 0.06em;
+}
+
+.racket-slider {
+  display: block;
+  padding: 3px 0;
+}
+
+.racket-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9aa6b5;
+  margin-bottom: 2px;
+}
+
+.racket-slider-value {
+  color: #d7dce3;
+  font-variant-numeric: tabular-nums;
+}
+
+.racket-slider input {
+  width: 100%;
+  accent-color: #fbbf24;
+}
+
+.racket-section .action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.racket-section .action-row button {
+  padding: 5px 2px;
+  border: 1px solid #232c39;
+  border-radius: 4px;
+  background: #131923;
+  color: #b9c3d0;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.racket-section .action-row button:hover {
+  border-color: #3b4a5e;
+}
+
+.racket-section .action-row button.active {
+  border-color: #fbbf24;
+  color: #fbbf24;
 }

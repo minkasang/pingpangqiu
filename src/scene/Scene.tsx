@@ -1,23 +1,32 @@
 import { Grid, GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
+import { Vector3, Quaternion } from 'three'
 import { FLOOR_Y } from '../physics/constants'
+import { computeRacketQuaternion, computeRacketVelocity } from '../physics/racket'
 import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
 import { Ball } from './Ball'
 import { BallOverlays } from './BallOverlays'
 import { CameraRig } from './CameraRig'
+import { GhostTrajectory } from './GhostTrajectory'
 import { Lighting } from './Lighting'
 import { PhysicsDebug } from './PhysicsDebug'
 import { Racket } from './Racket'
 import { Table } from './Table'
 import { TrajectoryTrail } from './TrajectoryTrail'
 
-/** 按真实帧间隔推进物理；慢放只改变推进量，不改变定步长，保证可复现 */
-function SimRunner() {
-  const engine = useSimStore((s) => s.engine)
+const _center = new Vector3()
+const _quat = new Quaternion()
+const _velocity = new Vector3()
 
+/** 每帧先把 store 里的球拍姿态/速度同步到引擎，再推进模拟 */
+function SimRunner() {
   useFrame((_, delta) => {
-    const { playing, timeScale } = useSimStore.getState()
+    const { engine, playing, timeScale, racketControl } = useSimStore.getState()
+    _quat.copy(computeRacketQuaternion(racketControl.pitchDeg, racketControl.yawDeg, racketControl.rollDeg, _quat))
+    computeRacketVelocity(racketControl.action, racketControl.speed, _velocity)
+    racketControl && _center.set(racketControl.x, racketControl.y, racketControl.z)
+    engine.setRacket(_center, _quat, _velocity)
     if (!playing) return
     engine.advance(Math.min(delta, 0.05) * timeScale)
   })
@@ -59,6 +68,7 @@ export function Scene() {
       <Ball />
       <BallOverlays />
       {trajectory && <TrajectoryTrail />}
+      <GhostTrajectory />
       <PhysicsDebug />
 
       <SimRunner />

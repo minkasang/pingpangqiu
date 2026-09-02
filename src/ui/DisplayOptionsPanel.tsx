@@ -21,6 +21,7 @@ const GROUPS: DisplayGroup[] = [
       { key: 'velocityZ', label: '前后分量 vz', color: PALETTE.velocityZ },
       { key: 'velocityY', label: '垂直分量 vy', color: PALETTE.velocityY },
       { key: 'velocityX', label: '左右分量 vx', color: PALETTE.velocityX },
+      { key: 'racketVelocity', label: '球拍速度', color: '#e2e8f0' },
     ],
   },
   {
@@ -36,7 +37,8 @@ const GROUPS: DisplayGroup[] = [
     items: [
       { key: 'spinAxis', label: '旋转轴 ω', color: PALETTE.angularVelocity },
       { key: 'spinRing', label: '旋转环', color: PALETTE.angularVelocity },
-      { key: 'trajectory', label: '轨迹拖尾', color: '#8fa3b8' },
+      { key: 'trajectory', label: '实际轨迹拖尾', color: '#8fa3b8' },
+      { key: 'prediction', label: '预测轨迹 (Ghost)', color: PALETTE.predicted },
     ],
   },
   {

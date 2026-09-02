@@ -3,6 +3,7 @@ import { Scene } from './scene/Scene'
 import { ControlBar } from './ui/ControlBar'
 import { DisplayOptionsPanel } from './ui/DisplayOptionsPanel'
 import { PhysicsInspector } from './ui/PhysicsInspector'
+import { RacketControlPanel } from './ui/RacketControlPanel'
 import { SpinLibrary } from './ui/SpinLibrary'
 import { Timeline } from './ui/Timeline'
 
@@ -26,7 +27,10 @@ export default function App() {
           <SpinLibrary />
           <DisplayOptionsPanel />
         </aside>
-        <PhysicsInspector />
+        <div className="right-side">
+          <PhysicsInspector />
+          <RacketControlPanel />
+        </div>
       </main>
 
       <footer className="bottombar">

@@ -2,7 +2,7 @@ import { Quaternion, Vector3 } from 'three'
 import { BALL, BALL_INERTIA, PHYSICS_DT } from './constants'
 import { resolveContact } from './contact'
 import { dragForce, gravityForce, magnusForce } from './forces'
-import { createFloorSurface, createNetSurface, createTableSurface, detectSphereBox } from './surface'
+import { createFloorSurface, createNetSurface, createRacketSurface, createTableSurface, detectSphereBox } from './surface'
 import type { BoxSurface } from './surface'
 import type { BallState, ContactEvent, TrajectorySample } from './types'
 
@@ -38,6 +38,8 @@ export class TableTennisPhysicsEngine {
   trajectory: TrajectorySample[] = []
   contacts: ContactEvent[] = []
   surfaces: BoxSurface[] = [createTableSurface(), createNetSurface(), createFloorSurface()]
+  /** 球拍表面：React 层每帧通过 setRacket 同步姿态与挥拍速度 */
+  readonly racketSurface = createRacketSurface(new Vector3(0, 0.18, 1.25), new Quaternion(), new Vector3())
 
   private readonly setup: EngineSetup
   private accumulator = 0
@@ -59,7 +61,24 @@ export class TableTennisPhysicsEngine {
       mass: BALL.mass,
     }
     if (setup.surfaces) this.surfaces.push(...setup.surfaces)
+    this.surfaces.push(this.racketSurface)
     this.recordSample()
+  }
+
+  /** 同步球拍姿态与挥拍速度（原地更新，不重建表面） */
+  setRacket(center: Vector3, rotation: Quaternion, velocity: Vector3): void {
+    this.racketSurface.center.copy(center)
+    this.racketSurface.rotation.copy(rotation)
+    this.racketSurface.velocity.copy(velocity)
+  }
+
+  /** 初始条件的副本，供预测轨迹使用 */
+  snapshotSetup(): EngineSetup {
+    return {
+      position: this.setup.position.clone(),
+      velocity: this.setup.velocity.clone(),
+      angularVelocity: this.setup.angularVelocity.clone(),
+    }
   }
 
   reset(): void {
@@ -177,4 +196,32 @@ export class TableTennisPhysicsEngine {
     const potential = mass * 9.81 * (position.y - groundY)
     return linear + rotational + potential
   }
+}
+
+/**
+ * 预测轨迹（Ghost Trajectory）：从初始状态出发，用与真实模拟完全相同的
+ * 定步长和接触求解推演全程（含球拍反弹）。因为一切确定性，预测结果
+ * 与实际运行逐点一致——这一点有测试锁死。
+ *
+ * extraSurfaces：预测时额外参与碰撞的表面（通常是当前姿态的球拍）。
+ */
+export function predictTrajectory(
+  setup: EngineSetup,
+  extraSurfaces: BoxSurface[],
+  maxTime = 3.5,
+): Vector3[] {
+  const engine = new TableTennisPhysicsEngine({ ...setup, surfaces: extraSurfaces })
+  // 去掉构造时自动加入的默认球拍，避免与 extraSurfaces 里的用户姿态球拍重复、
+  // 造成同一次接触被解两次导致轨迹分叉
+  engine.surfaces = engine.surfaces.filter((surface) => surface !== engine.racketSurface)
+  const points: Vector3[] = []
+  const sampleEvery = 4
+
+  let steps = 0
+  while ((steps + 1) * PHYSICS_DT <= maxTime) {
+    engine.step(PHYSICS_DT)
+    steps += 1
+    if (steps % sampleEvery === 0) points.push(engine.state.position.clone())
+  }
+  return points
 }

@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Vector3 } from 'three'
 import { useSimStore } from '../state/useSimStore'
-import { RACKET_POSITION } from '../theme'
 
 /** 只用到这几个成员，避免依赖 three-stdlib 的类型导出 */
 interface ControlsLike {
@@ -54,10 +53,12 @@ export function CameraRig() {
         desiredPosition.set(ball.x + 0.42, ball.y + 0.28, ball.z + 0.8)
         desiredTarget.copy(ball)
         break
-      case 'contact':
-        desiredPosition.set(RACKET_POSITION.x + 0.16, RACKET_POSITION.y + 0.1, RACKET_POSITION.z + 0.4)
-        desiredTarget.copy(RACKET_POSITION)
+      case 'contact': {
+        const racket = useSimStore.getState().racketControl
+        desiredPosition.set(racket.x + 0.16, racket.y + 0.1, racket.z + 0.4)
+        desiredTarget.set(racket.x, racket.y, racket.z)
         break
+      }
     }
 
     // 帧率无关的指数阻尼

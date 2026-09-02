@@ -154,3 +154,41 @@ src/
 ### Task 12 — Physics Debug + 方向总复核
 - Create: `PhysicsDebug.tsx`（collider / 接触点 / 法线 / 各矢量 / 轨迹采样点）
 - Verify: 逐条核对第 2、3、4 节的方向自检，全部与画面一致；`pnpm build` + 全量测试通过
+
+---
+
+# Phase 2 — Racket Interaction（2026-09-02 追加）
+
+Phase 1 已完成并经用户确认。Phase 2 目标：球拍成为可交互物理对象。
+
+## 已确认事实
+- 解析接触求解已支持移动表面（surfaceVelocity）与任意朝向（有向包围盒），
+  Phase 2 无需新的物理公式，只做接入与参数化
+- 合法发球已实现（先落发球方，过网，再落接球方）
+
+## 任务
+
+### Task 13 — 球拍状态与引擎接入
+- Create: `src/physics/racket.ts`（RacketControl 状态、5 种动作预设速度、
+  pitch/yaw/roll → 四元数、默认拍位）
+- Modify: `engine.ts` 增加球拍表面与 `setRacket()`；`predictTrajectory()` 纯函数
+- Verify: 移动球拍接触测试（顶拍更快、托拍向上、拍面角度改变出球方向）
+
+### Task 14 — 球拍控制面板
+- Create: `ui/RacketControlPanel.tsx`：位置 X/Y/Z、角度 前倾±40°/偏转±45°/翻转±45°、
+  动作预设（挡/搓/攻/拉/削）+ 速度倍率
+- 挂载在右侧检查器下方
+
+### Task 15 — 3D 球拍拖拽与姿态
+- Modify: `Racket.tsx` 由 store 驱动姿态；刀面直接拖拽改 X/Y（拖拽时禁用 OrbitControls）
+- 球拍速度箭头（白色）挂球拍中心
+
+### Task 16 — Ghost 预测轨迹
+- Create: `scene/GhostTrajectory.tsx`：drei Line 虚线，颜色 predicted
+- 从初始状态按当前球拍参数预测全程（含球拍反弹），球拍参数变化即重算
+
+### Task 17 — 检查器与显示选项
+- PhysicsInspector 增加球拍区块；DisplayOptions 增加 预测轨迹 / 球拍速度 两项
+
+### Task 18 — Phase 2 行为测试
+- 顶/托/角度/预测确定性；默认拍位下上旋发球可被挡回
