@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { Vector3 } from 'three'
 import { TableTennisPhysicsEngine } from './engine'
 import { BALL, PHYSICS_DT, SURFACE, TABLE } from './constants'
-import { angularVelocityFromSpin } from './spin'
+import { LAUNCH_PROFILES } from './launch'
+import { angularVelocityFromSpin, SPIN_LIBRARY } from './spin'
 import type { ContactEvent, SpinType } from './types'
 
-const START = new Vector3(0, 0.35, -0.6)
+/** 落点在对手一侧、球网之前，保证测试对象是球台接触而不是球网接触 */
+const START = new Vector3(0, 0.3, -0.72)
 const LAUNCH = new Vector3(0, -2, 6)
 
 function makeEngine(spin: SpinType, rpm = 4000): TableTennisPhysicsEngine {
@@ -18,10 +20,12 @@ function makeEngine(spin: SpinType, rpm = 4000): TableTennisPhysicsEngine {
 
 function firstContact(spin: SpinType, rpm = 4000): ContactEvent {
   const engine = makeEngine(spin, rpm)
-  while (engine.contacts.length === 0 && engine.time < 3) engine.step(PHYSICS_DT)
-  const contact = engine.contacts[0]
-  if (!contact) throw new Error(`${spin} 在 3 秒内未产生任何接触`)
-  return contact
+  while (engine.time < 3) {
+    engine.step(PHYSICS_DT)
+    const table = engine.contacts.find((event) => event.kind === 'table')
+    if (table) return table
+  }
+  throw new Error(`${spin} 在 3 秒内未产生任何球台接触`)
 }
 
 describe('端到端：旋转决定落台后的水平速度', () => {
@@ -127,6 +131,29 @@ describe('能量与积分稳定性', () => {
     expect(advanced.time).toBeCloseTo(stepped.time, 12)
     expect(advanced.state.position.distanceTo(stepped.state.position)).toBeCloseTo(0, 12)
   })
+})
+
+describe('来球规则合规性：回击必须过网并落在接球者一侧台面', () => {
+  for (const spin of SPIN_LIBRARY) {
+    it(`${spin} 来球的第一落点在接球者一侧台面（不窜网、不出界）`, () => {
+      const profile = LAUNCH_PROFILES[spin]
+      const engine = new TableTennisPhysicsEngine({
+        position: profile.position.clone(),
+        velocity: profile.velocity.clone(),
+        angularVelocity: angularVelocityFromSpin(spin, 3200),
+      })
+
+      while (engine.contacts.length === 0 && engine.time < 3) engine.step(PHYSICS_DT)
+      const contact = engine.contacts[0]
+      if (!contact) throw new Error(`${spin} 来球 3 秒内未产生任何接触`)
+
+      // 第一接触必须是台面：窜网会记为 net，出界会记为 floor
+      expect(contact.kind).toBe('table')
+      expect(contact.point.z).toBeGreaterThan(0)
+      expect(Math.abs(contact.point.x)).toBeLessThan(TABLE.width / 2)
+      expect(contact.point.z).toBeLessThan(TABLE.length / 2)
+    })
+  }
 })
 
 describe('重置', () => {

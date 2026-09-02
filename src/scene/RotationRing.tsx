@@ -15,6 +15,8 @@ const ARROW_ANGLES = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]
  * 旋转环：与旋转轴垂直的半透明环，环上箭头按右手定则指出旋转方向。
  * 关键点：箭头方向来自 ω 本身，因此上旋 / 下旋 / 侧旋 / 组合旋
  * 全部自动正确，没有任何按类型写死的分支。
+ *
+ * 位置由父级 BallOverlays 提供（跟随球心），本组件只负责朝向。
  */
 export function RotationRing() {
   const engine = useSimStore((s) => s.engine)
@@ -52,7 +54,6 @@ export function RotationRing() {
     node.visible = true
     omegaDirection.copy(omega).divideScalar(speed)
     orientation.setFromUnitVectors(FORWARD, omegaDirection)
-    node.position.copy(engine.state.position)
     node.quaternion.copy(orientation)
   })
 

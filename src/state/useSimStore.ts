@@ -1,21 +1,18 @@
 import { create } from 'zustand'
-import { Vector3 } from 'three'
 import { PHYSICS_DT } from '../physics/constants'
 import { TableTennisPhysicsEngine } from '../physics/engine'
+import { LAUNCH_PROFILES } from '../physics/launch'
 import { angularVelocityFromSpin } from '../physics/spin'
 import type { SpinType } from '../physics/types'
 import type { CameraPreset, InspectorMode } from '../theme'
 
-/** 发球点：对手一侧端线上方 */
-export const BALL_START = new Vector3(0, 0.34, -1.32)
-/** 出球速度：朝接球者（+Z）平飞，略向下 */
-export const BALL_LAUNCH = new Vector3(0, -1.4, 7.2)
 export const DEFAULT_RPM = 3200
 
 export function createEngine(spin: SpinType, rpm: number): TableTennisPhysicsEngine {
+  const profile = LAUNCH_PROFILES[spin]
   return new TableTennisPhysicsEngine({
-    position: BALL_START.clone(),
-    velocity: BALL_LAUNCH.clone(),
+    position: profile.position.clone(),
+    velocity: profile.velocity.clone(),
     angularVelocity: angularVelocityFromSpin(spin, rpm),
   })
 }

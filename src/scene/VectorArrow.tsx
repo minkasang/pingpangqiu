@@ -23,8 +23,11 @@ export interface VectorArrowProps {
 const _direction = new Vector3()
 
 /**
- * 三维矢量箭头。几何体按单位长度构建，每帧只改 scale 与位置，
+ * 三维矢量箭头。几何体按单位长度构建，每帧只改 scale 与朝向，
  * 不重建几何，保证 60fps。
+ *
+ * 箭头原点 = 父级 group 原点（BallOverlays 已跟随球心），
+ * 本组件只设置方向与长度，不再叠加球心位置。
  */
 export function VectorArrow({ get, scale, color, thickness = 1 }: VectorArrowProps) {
   const engine = useSimStore((s) => s.engine)
@@ -47,7 +50,6 @@ export function VectorArrow({ get, scale, color, thickness = 1 }: VectorArrowPro
     const length = Math.max(vector.length() * scale, 0.012)
     _direction.copy(vector).normalize()
     orientation.setFromUnitVectors(UP, _direction)
-    node.position.copy(engine.state.position)
     node.quaternion.copy(orientation)
 
     if (shaft.current) shaft.current.scale.y = length

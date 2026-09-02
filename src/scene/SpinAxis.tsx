@@ -12,6 +12,8 @@ const HALF = 0.085
 /**
  * 旋转轴：穿过球心，方向 = 角速度方向，两端有箭头表示旋转的轴向约定，
  * 顶端标 ω。随转速降低整体淡出。
+ *
+ * 位置由父级 BallOverlays 提供（跟随球心），本组件只负责朝向。
  */
 export function SpinAxis() {
   const engine = useSimStore((s) => s.engine)
@@ -33,7 +35,6 @@ export function SpinAxis() {
     node.visible = true
     axis.copy(omega).divideScalar(speed)
     orientation.setFromUnitVectors(UP, axis)
-    node.position.copy(engine.state.position)
     node.quaternion.copy(orientation)
 
     const opacity = Math.min(speed / 60, 1)

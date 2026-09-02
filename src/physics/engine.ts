@@ -2,7 +2,7 @@ import { Quaternion, Vector3 } from 'three'
 import { BALL, BALL_INERTIA, PHYSICS_DT } from './constants'
 import { resolveContact } from './contact'
 import { dragForce, gravityForce, magnusForce } from './forces'
-import { createFloorSurface, createTableSurface, detectSphereBox } from './surface'
+import { createFloorSurface, createNetSurface, createTableSurface, detectSphereBox } from './surface'
 import type { BoxSurface } from './surface'
 import type { BallState, ContactEvent, TrajectorySample } from './types'
 
@@ -37,7 +37,7 @@ export class TableTennisPhysicsEngine {
   time = 0
   trajectory: TrajectorySample[] = []
   contacts: ContactEvent[] = []
-  surfaces: BoxSurface[] = [createTableSurface(), createFloorSurface()]
+  surfaces: BoxSurface[] = [createTableSurface(), createNetSurface(), createFloorSurface()]
 
   private readonly setup: EngineSetup
   private accumulator = 0

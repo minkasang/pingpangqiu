@@ -48,6 +48,22 @@ export function createFloorSurface(): BoxSurface {
 
 export const RACKET_HALF_EXTENTS = new Vector3(0.075, 0.075, 0.006)
 
+/** 球网比台面宽（1.83m），两端各伸出 15.25cm */
+export const NET_WIDTH = 1.83
+
+export function createNetSurface(): BoxSurface {
+  return {
+    kind: 'net',
+    center: new Vector3(0, TABLE.netHeight / 2, 0),
+    rotation: new Quaternion(),
+    halfExtents: new Vector3(NET_WIDTH / 2, TABLE.netHeight / 2, 0.004),
+    velocity: new Vector3(0, 0, 0),
+    // 触网基本卸掉全部反弹
+    restitution: 0.05,
+    friction: 0.3,
+  }
+}
+
 export function createRacketSurface(center: Vector3, rotation: Quaternion, velocity: Vector3): BoxSurface {
   return {
     kind: 'racket',

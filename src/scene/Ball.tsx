@@ -10,17 +10,18 @@ const R = BALL.radius
 /**
  * 球表面参考标记：一条细色环 + 两个极点。
  * 纯白球高速旋转时看不出转的方向，这两个标记只负责让旋转可见。
+ * 环和点都要凸出球面足够多，否则远距离观察时会被球体本身挡住。
  */
 function BallMarkings() {
   return (
     <group>
       <mesh>
-        <torusGeometry args={[R * 1.004, R * 0.045, 10, 72]} />
+        <torusGeometry args={[R * 1.02, R * 0.11, 10, 72]} />
         <meshStandardMaterial color={PALETTE.ballMark} roughness={0.35} metalness={0.1} />
       </mesh>
       {[1, -1].map((side) => (
-        <mesh key={side} position={[0, 0, side * R * 0.99]}>
-          <sphereGeometry args={[R * 0.18, 16, 12]} />
+        <mesh key={side} position={[0, 0, side * R * 1.01]}>
+          <sphereGeometry args={[R * 0.22, 16, 12]} />
           <meshStandardMaterial color={PALETTE.ballMark} roughness={0.35} />
         </mesh>
       ))}
