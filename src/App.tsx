@@ -4,6 +4,7 @@ import { ControlBar } from './ui/ControlBar'
 import { DisplayOptionsPanel } from './ui/DisplayOptionsPanel'
 import { PhysicsInspector } from './ui/PhysicsInspector'
 import { RacketControlPanel } from './ui/RacketControlPanel'
+import { ScenariosPanel } from './ui/ScenariosPanel'
 import { SpinLibrary } from './ui/SpinLibrary'
 import { Timeline } from './ui/Timeline'
 
@@ -25,6 +26,7 @@ export default function App() {
         </Canvas>
         <aside className="panel panel-left">
           <SpinLibrary />
+          <ScenariosPanel />
           <DisplayOptionsPanel />
         </aside>
         <div className="right-side">

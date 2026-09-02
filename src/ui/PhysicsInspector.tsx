@@ -2,6 +2,7 @@ import { Vector3 } from 'three'
 import { AIR, BALL, SURFACE } from '../physics/constants'
 import { dragForce, magnusForce } from '../physics/forces'
 import { computeRacketVelocity, RACKET_ACTION_LABEL } from '../physics/racket'
+import { getScenario } from '../physics/scenarios'
 import { rpmOf, SPIN_LABEL } from '../physics/spin'
 import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
@@ -85,10 +86,12 @@ export function PhysicsInspector() {
             <Row label="速度" value={describeSpeed(speed)} />
             <Row label="高度" value={`${fmt(Math.max(position.y, 0))} m`} />
           </Section>
+          <ScenarioHint />
           <Section title="读懂画面">
             <Row label="青色箭头" value="球的飞行方向" color={PALETTE.velocity} />
             <Row label="琥珀环" value="球在转的方向" color={PALETTE.angularVelocity} />
             <Row label="红色箭头" value="让它拐弯的力" color={PALETTE.forceMagnus} />
+            <Row label="黄虚线" value="正确接法的预测" color={PALETTE.compareCorrect} />
           </Section>
         </>
       ) : (
@@ -132,5 +135,18 @@ function RacketInfo() {
       <Row label="位置" value={`[${control.x.toFixed(2)}, ${control.y.toFixed(2)}, ${control.z.toFixed(2)}] m`} />
       <Row label="触拍速度" value={fmtVec(velocity)} color="#e2e8f0" />
     </>
+  )
+}
+
+function ScenarioHint() {
+  const id = useSimStore((s) => s.activeScenarioId)
+  const phase = useSimStore((s) => s.scenarioPhase)
+  if (!id) return null
+  const scenario = getScenario(id)
+  const tip = phase === 'correct' ? scenario.teachReason : scenario.failReason
+  return (
+    <Section title={phase === 'correct' ? '教学要点 · 正确' : '教学要点 · 错误示范'}>
+      <p className="scenario-hint">{tip}</p>
+    </Section>
   )
 }

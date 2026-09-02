@@ -18,6 +18,8 @@ export const PALETTE = {
   contactNormal: '#4ade80',
   friction: '#fb923c',
   predicted: '#67e8f9',
+  /** 对比模式：场景激活时的「正确拍位」预测轨迹 */
+  compareCorrect: '#fde047',
   trail: '#5c6773',
   table: '#12496b',
   tableLine: '#dbe4ee',

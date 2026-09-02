@@ -222,6 +222,107 @@ canvas {
   flex: none;
 }
 
+/* ---------- 教学场景面板 ---------- */
+
+.scenarios-panel {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #1e2632;
+}
+
+.scenarios-panel h2 {
+  margin: 0 0 8px;
+}
+
+.scenario-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.scenario-list button {
+  padding: 6px 4px;
+  border: 1px solid #232c39;
+  border-radius: 4px;
+  background: #131923;
+  color: #c3ccd8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.scenario-list button:hover {
+  border-color: #3b4a5e;
+}
+
+.scenario-list button.active {
+  border-color: #fde047;
+  color: #fde047;
+}
+
+.scenario-detail {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #1e2632;
+  border-radius: 5px;
+  background: rgba(253, 224, 71, 0.05);
+}
+
+.scenario-detail .phase {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scenario-detail .phase-wrong {
+  color: #f87171;
+}
+
+.scenario-detail .phase-correct {
+  color: #fde047;
+}
+
+.scenario-detail .reason {
+  margin: 0 0 8px;
+  color: #c3ccd8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.scenario-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.scenario-actions button {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid #232c39;
+  border-radius: 4px;
+  background: #131923;
+  color: #c3ccd8;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.scenario-actions button.primary {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #eef4ff;
+}
+
+.scenario-actions button:hover {
+  border-color: #3b4a5e;
+}
+
+.scenario-hint {
+  margin: 0;
+  color: #c3ccd8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 /* ---------- 数据面板 ---------- */
 
 .mode-switch {
