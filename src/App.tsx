@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { Scene } from './scene/Scene'
 import { ControlBar } from './ui/ControlBar'
+import { DisplayOptionsPanel } from './ui/DisplayOptionsPanel'
 import { PhysicsInspector } from './ui/PhysicsInspector'
 import { SpinLibrary } from './ui/SpinLibrary'
 import { Timeline } from './ui/Timeline'
@@ -21,7 +22,10 @@ export default function App() {
         >
           <Scene />
         </Canvas>
-        <SpinLibrary />
+        <aside className="panel panel-left">
+          <SpinLibrary />
+          <DisplayOptionsPanel />
+        </aside>
         <PhysicsInspector />
       </main>
 

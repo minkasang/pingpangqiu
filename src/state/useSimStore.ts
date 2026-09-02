@@ -19,14 +19,48 @@ export function createEngine(spin: SpinType, rpm: number): TableTennisPhysicsEng
 
 export const TIME_SCALES = [0.05, 0.1, 0.25, 0.5, 1] as const
 
+/** 每个可视化元素独立开关，颜色与 3D 中箭头一一对应 */
+export interface DisplayOptions {
+  /** 合速度 */
+  velocity: boolean
+  /** 前后分量 vz */
+  velocityZ: boolean
+  /** 垂直分量 vy */
+  velocityY: boolean
+  /** 左右分量 vx */
+  velocityX: boolean
+  magnus: boolean
+  drag: boolean
+  gravity: boolean
+  spinAxis: boolean
+  spinRing: boolean
+  trajectory: boolean
+  colliderDebug: boolean
+  contactDebug: boolean
+}
+
+const DEFAULT_DISPLAY: DisplayOptions = {
+  velocity: true,
+  velocityZ: true,
+  velocityY: true,
+  velocityX: true,
+  magnus: true,
+  drag: true,
+  gravity: true,
+  spinAxis: true,
+  spinRing: true,
+  trajectory: true,
+  colliderDebug: false,
+  contactDebug: false,
+}
+
 interface SimStore {
   spin: SpinType
   rpm: number
   engine: TableTennisPhysicsEngine
   playing: boolean
   timeScale: number
-  showForces: boolean
-  showDebug: boolean
+  display: DisplayOptions
   camera: CameraPreset
   inspectorMode: InspectorMode
 
@@ -39,8 +73,7 @@ interface SimStore {
   stepFrame: () => void
   setCamera: (camera: CameraPreset) => void
   setInspectorMode: (mode: InspectorMode) => void
-  toggleForces: () => void
-  toggleDebug: () => void
+  toggleDisplay: (key: keyof DisplayOptions) => void
 }
 
 export const useSimStore = create<SimStore>((set, get) => ({
@@ -50,8 +83,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   // 默认暂停：按 spec 要求，选完旋转先给预览，再手动 Run Simulation
   playing: false,
   timeScale: 1,
-  showForces: true,
-  showDebug: false,
+  display: DEFAULT_DISPLAY,
   camera: 'side',
   inspectorMode: 'physics',
 
@@ -64,6 +96,6 @@ export const useSimStore = create<SimStore>((set, get) => ({
   stepFrame: () => get().engine.step(PHYSICS_DT),
   setCamera: (camera) => set({ camera }),
   setInspectorMode: (inspectorMode) => set({ inspectorMode }),
-  toggleForces: () => set((s) => ({ showForces: !s.showForces })),
-  toggleDebug: () => set((s) => ({ showDebug: !s.showDebug })),
+  toggleDisplay: (key) =>
+    set((s) => ({ display: { ...s.display, [key]: !s.display[key] } })),
 }))

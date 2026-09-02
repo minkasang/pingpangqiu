@@ -7,7 +7,7 @@ import type { ContactEvent, SurfaceKind } from '../physics/types'
 const UP = new Vector3(0, 1, 0)
 
 const KIND_COLOR: Record<SurfaceKind, string> = {
-  table: '#34d399',
+  table: '#4ade80',
   racket: '#fb923c',
   floor: '#94a3b8',
   net: '#38bdf8',
@@ -79,13 +79,14 @@ function SurfaceBoxes() {
 }
 
 export function PhysicsDebug() {
-  const showDebug = useSimStore((s) => s.showDebug)
-  if (!showDebug) return null
+  const colliderDebug = useSimStore((s) => s.display.colliderDebug)
+  const contactDebug = useSimStore((s) => s.display.contactDebug)
+  if (!colliderDebug && !contactDebug) return null
 
   return (
     <>
-      <SurfaceBoxes />
-      <ContactMarkers />
+      {colliderDebug && <SurfaceBoxes />}
+      {contactDebug && <ContactMarkers />}
     </>
   )
 }

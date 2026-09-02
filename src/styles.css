@@ -158,6 +158,53 @@ canvas {
   line-height: 1.6;
 }
 
+/* ---------- 显示选项 ---------- */
+
+.display-panel {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #1e2632;
+}
+
+.display-panel h2 {
+  margin: 0 0 8px;
+}
+
+.display-group h3 {
+  margin: 8px 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6f7b8b;
+  letter-spacing: 0.06em;
+}
+
+.display-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+  color: #b9c3d0;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.display-item:hover {
+  color: #e2e8f0;
+}
+
+.display-item input {
+  accent-color: #38bdf8;
+  margin: 0;
+}
+
+.display-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+
 /* ---------- 数据面板 ---------- */
 
 .mode-switch {

@@ -3,7 +3,7 @@ import { useSimStore } from '../state/useSimStore'
 
 /**
  * 旋转库：点击只切换预览并暂停（spec 第八节要求不立即播放），
- * 由「运行模拟」按钮启动。
+ * 由「运行模拟」按钮启动。外层面板由 App 提供。
  */
 export function SpinLibrary() {
   const spin = useSimStore((s) => s.spin)
@@ -13,7 +13,7 @@ export function SpinLibrary() {
   const setPlaying = useSimStore((s) => s.setPlaying)
 
   return (
-    <aside className="panel panel-left">
+    <>
       <h2>旋转库</h2>
       <div className="spin-list">
         {SPIN_LIBRARY.map((type) => (
@@ -48,6 +48,6 @@ export function SpinLibrary() {
         平快、下旋发球稍慢稍高。切换旋转后按「运行模拟」观察飞行差异、
         落台反弹与旋转衰减。
       </p>
-    </aside>
+    </>
   )
 }

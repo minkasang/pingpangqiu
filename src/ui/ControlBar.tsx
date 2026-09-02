@@ -10,10 +10,6 @@ export function ControlBar() {
   const setTimeScale = useSimStore((s) => s.setTimeScale)
   const camera = useSimStore((s) => s.camera)
   const setCamera = useSimStore((s) => s.setCamera)
-  const showForces = useSimStore((s) => s.showForces)
-  const toggleForces = useSimStore((s) => s.toggleForces)
-  const showDebug = useSimStore((s) => s.showDebug)
-  const toggleDebug = useSimStore((s) => s.toggleDebug)
 
   return (
     <div className="control-bar">
@@ -49,15 +45,6 @@ export function ControlBar() {
             {CAMERA_LABELS[preset]}
           </button>
         ))}
-      </div>
-
-      <div className="group">
-        <button className={showForces ? 'active' : ''} onClick={toggleForces}>
-          力显示
-        </button>
-        <button className={showDebug ? 'active' : ''} onClick={toggleDebug}>
-          调试视图
-        </button>
       </div>
     </div>
   )

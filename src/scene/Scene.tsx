@@ -26,6 +26,8 @@ function SimRunner() {
 }
 
 export function Scene() {
+  const trajectory = useSimStore((s) => s.display.trajectory)
+
   return (
     <>
       <color attach="background" args={[PALETTE.background]} />
@@ -56,7 +58,7 @@ export function Scene() {
       <Racket />
       <Ball />
       <BallOverlays />
-      <TrajectoryTrail />
+      {trajectory && <TrajectoryTrail />}
       <PhysicsDebug />
 
       <SimRunner />
