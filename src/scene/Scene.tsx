@@ -1,7 +1,8 @@
 import { Grid, GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { Vector3, Quaternion } from 'three'
-import { FLOOR_Y } from '../physics/constants'
+import { BALL, FLOOR_Y } from '../physics/constants'
+import { useMacroView } from '../physics/macroView'
 import { computeRacketQuaternion, computeRacketVelocity } from '../physics/racket'
 import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
@@ -12,6 +13,7 @@ import { GhostTrajectory } from './GhostTrajectory'
 import { Lighting } from './Lighting'
 import { PhysicsDebug } from './PhysicsDebug'
 import { Racket } from './Racket'
+import { SelectedContactForces } from './SelectedContactForces'
 import { Table } from './Table'
 import { TrajectoryTrail } from './TrajectoryTrail'
 
@@ -19,16 +21,29 @@ const _center = new Vector3()
 const _quat = new Quaternion()
 const _velocity = new Vector3()
 
-/** 每帧先把 store 里的球拍姿态/速度同步到引擎，再推进模拟 */
+/** 每帧先把 store 里的球拍姿态/速度同步到引擎；球接近时启用 Macro 自动慢放 */
 function SimRunner() {
   useFrame((_, delta) => {
-    const { engine, playing, timeScale, racketControl } = useSimStore.getState()
+    const state = useSimStore.getState()
+    const { engine, playing, timeScale, racketControl, autoMacro, userTimeScale } = state
     _quat.copy(computeRacketQuaternion(racketControl.pitchDeg, racketControl.yawDeg, racketControl.rollDeg, _quat))
     computeRacketVelocity(racketControl.action, racketControl.speed, _velocity)
-    racketControl && _center.set(racketControl.x, racketControl.y, racketControl.z)
+    _center.set(racketControl.x, racketControl.y, racketControl.z)
     engine.setRacket(_center, _quat, _velocity)
+
     if (!playing) return
-    engine.advance(Math.min(delta, 0.05) * timeScale)
+
+    // Macro 自动慢放：球接近球拍时降到 0.1×；离开时恢复用户设定的时间速度
+    if (autoMacro) {
+      const mode = useMacroView(engine.state.position, racketControl, BALL.radius)
+      if (mode !== 'far' && timeScale > 0.1) {
+        useSimStore.setState({ timeScale: 0.1 })
+      } else if (mode === 'far' && timeScale === 0.1 && userTimeScale > 0.1) {
+        useSimStore.setState({ timeScale: userTimeScale })
+      }
+    }
+
+    engine.advance(Math.min(delta, 0.05) * (useSimStore.getState().timeScale))
   })
 
   return null
@@ -70,6 +85,7 @@ export function Scene() {
       {trajectory && <TrajectoryTrail />}
       <GhostTrajectory />
       <PhysicsDebug />
+      <SelectedContactForces />
 
       <SimRunner />
       <CameraRig />

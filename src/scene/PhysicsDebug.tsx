@@ -1,3 +1,4 @@
+import { Html } from '@react-three/drei'
 import { useMemo } from 'react'
 import { Quaternion, Vector3 } from 'three'
 import { useSimStore } from '../state/useSimStore'
@@ -13,7 +14,7 @@ const KIND_COLOR: Record<SurfaceKind, string> = {
   net: '#38bdf8',
 }
 
-const MAX_MARKERS = 12
+const MAX_MARKERS = 16
 
 function NormalArrow({ contact }: { contact: ContactEvent }) {
   const quaternion = useMemo(
@@ -31,23 +32,46 @@ function NormalArrow({ contact }: { contact: ContactEvent }) {
   )
 }
 
-/** 最近几次接触的接触点 + 法线，用于核对碰撞求解方向 */
+function ContactNumber({ contact, number, selected }: { contact: ContactEvent; number: number; selected: boolean }) {
+  return (
+    <Html position={contact.point} center distanceFactor={1.2} zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
+      <span className={`contact-marker ${selected ? 'selected' : ''}`} style={{ borderColor: KIND_COLOR[contact.kind] }}>
+        {number}
+      </span>
+    </Html>
+  )
+}
+
 function ContactMarkers() {
   useLiveTick(10)
   const engine = useSimStore((s) => s.engine)
+  const selectedId = useSimStore((s) => s.selectedContactId)
+  const selectContact = useSimStore((s) => s.selectContact)
   const recent = engine.contacts.slice(-MAX_MARKERS)
 
   return (
     <>
-      {recent.map((contact) => (
-        <group key={contact.id} position={contact.point}>
-          <mesh>
-            <sphereGeometry args={[0.009, 12, 8]} />
-            <meshBasicMaterial color={KIND_COLOR[contact.kind]} toneMapped={false} />
-          </mesh>
-          <NormalArrow contact={contact} />
-        </group>
-      ))}
+      {recent.map((contact, idx) => {
+        const number = engine.contacts.length - recent.length + idx + 1
+        const selected = contact.id === selectedId
+        return (
+          <group
+            key={contact.id}
+            position={contact.point}
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              selectContact(contact.id)
+            }}
+          >
+            <mesh>
+              <sphereGeometry args={[selected ? 0.014 : 0.009, 12, 8]} />
+              <meshBasicMaterial color={KIND_COLOR[contact.kind]} toneMapped={false} />
+            </mesh>
+            <NormalArrow contact={contact} />
+            <ContactNumber contact={contact} number={number} selected={selected} />
+          </group>
+        )
+      })}
     </>
   )
 }

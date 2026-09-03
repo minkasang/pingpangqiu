@@ -8,6 +8,7 @@ import { useSimStore } from '../state/useSimStore'
 import { PALETTE } from '../theme'
 import { fmt, fmtVec } from './format'
 import { useLiveTick } from './useLiveTick'
+import type { ContactEvent } from '../physics/types'
 
 const ZERO = new Vector3()
 
@@ -114,6 +115,7 @@ export function PhysicsInspector() {
             <Row label="胶皮摩擦" value={fmt(SURFACE.racket.friction, 2)} color={PALETTE.friction} />
             <Row label="胶皮恢复" value={fmt(SURFACE.racket.restitution, 2)} />
           </Section>
+          <ContactSection />
           <Section title="环境">
             <Row label="空气密度" value={`${AIR.density} kg/m³`} />
             <Row label="模拟时间" value={`${fmt(engine.time)} s`} />
@@ -121,6 +123,106 @@ export function PhysicsInspector() {
         </>
       )}
     </aside>
+  )
+}
+
+function ContactSection() {
+  useLiveTick(8)
+  const engine = useSimStore((s) => s.engine)
+  const selectedId = useSimStore((s) => s.selectedContactId)
+  const selectContact = useSimStore((s) => s.selectContact)
+  const display = useSimStore((s) => s.display)
+
+  if (engine.contacts.length === 0) {
+    return (
+      <Section title="接触">
+        <p className="contact-empty">尚无接触。播放后会在此列出 ①②③…</p>
+      </Section>
+    )
+  }
+
+  const recent = engine.contacts.slice(-8)
+  const startIndex = engine.contacts.length - recent.length
+  const selected = selectedId
+    ? engine.contacts.find((contact) => contact.id === selectedId) ?? null
+    : null
+
+  return (
+    <Section title={`接触  (共 ${engine.contacts.length} 次)`}>
+      <div className="contact-list">
+        {recent.map((contact, index) => {
+          const number = startIndex + index + 1
+          const selected = contact.id === selectedId
+          return (
+            <button
+              key={contact.id}
+              className={`contact-item ${selected ? 'selected' : ''}`}
+              onClick={() => selectContact(selected ? null : contact.id)}
+              style={{ borderLeftColor: kindColor(contact.kind) }}
+            >
+              <span className="contact-num">{number}</span>
+              <span className="contact-kind">{contact.kind}</span>
+              <span className="contact-time">{fmt(contact.time * 1000, 0)} ms</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {selected && <ContactDetail contact={selected} display={display} />}
+
+      {display.contactDebug && selectedId === null && (
+        <p className="hint">提示：开启「接触点与法线」后可直接在 3D 中点击编号标记。</p>
+      )}
+    </Section>
+  )
+}
+
+const KIND_LABELS: Record<ContactEvent['kind'], string> = {
+  table: '台面',
+  racket: '球拍',
+  floor: '地面',
+  net: '球网',
+}
+
+function kindColor(kind: ContactEvent['kind']): string {
+  switch (kind) {
+    case 'table':
+      return '#4ade80'
+    case 'racket':
+      return '#fb923c'
+    case 'floor':
+      return '#94a3b8'
+    case 'net':
+      return '#38bdf8'
+  }
+}
+
+function ContactDetail({ contact }: { contact: ContactEvent; display: { prediction: boolean } }) {
+  const rpmBefore = rpmOf(contact.before.angularVelocity)
+  const rpmAfter = rpmOf(contact.after.angularVelocity)
+  return (
+    <div className="contact-detail">
+      <h4>
+        {KIND_LABELS[contact.kind]}接触 · {fmt(contact.time * 1000, 0)} ms
+      </h4>
+      <Row label="接触点" value={fmtVec(contact.point)} />
+      <Row label="法线" value={fmtVec(contact.normal, 2)} />
+      <div className="contact-beforeafter">
+        <div className="ba ba-before">
+          <h5>接触前</h5>
+          <Row label="速度" value={fmtVec(contact.before.velocity)} />
+          <Row label="转速" value={`${fmt(rpmBefore, 0)} RPM`} />
+        </div>
+        <div className="ba ba-after">
+          <h5>接触后</h5>
+          <Row label="速度" value={fmtVec(contact.after.velocity)} />
+          <Row label="转速" value={`${fmt(rpmAfter, 0)} RPM`} />
+        </div>
+      </div>
+      <Row label="法向冲量" value={`${fmt(contact.normalImpulse * 1000, 1)} mN·s`} color={PALETTE.contactNormal} />
+      <Row label="摩擦冲量" value={fmtVec(contact.frictionImpulse.clone().multiplyScalar(1000), 1) + ' mN·s'} color={PALETTE.friction} />
+      <Row label="滑移速度" value={fmtVec(contact.slipVelocity)} />
+    </div>
   )
 }
 

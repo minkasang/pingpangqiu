@@ -170,6 +170,7 @@ export class TableTennisPhysicsEngine {
         },
         frictionImpulse: result.frictionImpulse.clone(),
         slipVelocity: result.slipVelocity.clone(),
+        normalImpulse: result.normalImpulse,
       })
 
       // 长时间运行时接触事件同样不能无限增长

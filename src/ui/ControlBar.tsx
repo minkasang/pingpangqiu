@@ -10,6 +10,8 @@ export function ControlBar() {
   const setTimeScale = useSimStore((s) => s.setTimeScale)
   const camera = useSimStore((s) => s.camera)
   const setCamera = useSimStore((s) => s.setCamera)
+  const autoMacro = useSimStore((s) => s.display.autoMacro)
+  const toggleDisplay = useSimStore((s) => s.toggleDisplay)
 
   return (
     <div className="control-bar">
@@ -45,6 +47,12 @@ export function ControlBar() {
             {CAMERA_LABELS[preset]}
           </button>
         ))}
+      </div>
+
+      <div className="group">
+        <button className={autoMacro ? 'active' : ''} onClick={() => toggleDisplay('autoMacro')}>
+          自动慢放
+        </button>
       </div>
     </div>
   )

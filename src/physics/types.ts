@@ -60,6 +60,8 @@ export interface ContactEvent {
   normal: Vector3
   before: { velocity: Vector3; angularVelocity: Vector3 }
   after: { velocity: Vector3; angularVelocity: Vector3 }
+  /** 法向冲量大小（标量） */
+  normalImpulse: number
   frictionImpulse: Vector3
   slipVelocity: Vector3
 }

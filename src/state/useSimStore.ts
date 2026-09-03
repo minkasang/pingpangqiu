@@ -44,6 +44,8 @@ export interface DisplayOptions {
   trajectory: boolean
   /** Ghost 预测轨迹 */
   prediction: boolean
+  /** 球接近时自动慢放并切镜头 */
+  autoMacro: boolean
   /** 球拍速度箭头 */
   racketVelocity: boolean
   colliderDebug: boolean
@@ -62,6 +64,7 @@ const DEFAULT_DISPLAY: DisplayOptions = {
   spinRing: true,
   trajectory: true,
   prediction: true,
+  autoMacro: true,
   racketVelocity: true,
   colliderDebug: false,
   contactDebug: false,
@@ -81,12 +84,19 @@ interface SimStore {
   activeScenarioId: ScenarioId | null
   /** 当前在演示错误还是正确拍位 */
   scenarioPhase: ScenarioPhase
+  /** 选中的接触点 id（用于碰撞检查器高亮） */
+  selectedContactId: number | null
+  /** 是否启用 Macro 自动慢放与镜头推近 */
+  autoMacro: boolean
+  /** 用户期望的时间速度（自动慢放会临时覆盖） */
+  userTimeScale: number
 
   setSpin: (spin: SpinType) => void
   setRpm: (rpm: number) => void
   setPlaying: (playing: boolean) => void
   togglePlaying: () => void
   setTimeScale: (timeScale: number) => void
+  setUserTimeScale: (timeScale: number) => void
   restart: () => void
   stepFrame: () => void
   setCamera: (camera: CameraPreset) => void
@@ -101,6 +111,8 @@ interface SimStore {
   revertScenarioToWrong: () => void
   /** 退出场景模式，恢复默认状态 */
   clearScenario: () => void
+  /** 选择接触点 */
+  selectContact: (id: number | null) => void
 }
 
 export const useSimStore = create<SimStore>((set, get) => ({
@@ -116,13 +128,22 @@ export const useSimStore = create<SimStore>((set, get) => ({
   racketControl: DEFAULT_RACKET_CONTROL,
   activeScenarioId: null,
   scenarioPhase: null,
+  selectedContactId: null,
+  autoMacro: true,
+  userTimeScale: 1,
 
   setSpin: (spin) => set((s) => ({ spin, engine: createEngine(spin, s.rpm), playing: false })),
   setRpm: (rpm) => set((s) => ({ rpm, engine: createEngine(s.spin, rpm), playing: false })),
   setPlaying: (playing) => set({ playing }),
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
-  setTimeScale: (timeScale) => set({ timeScale }),
-  restart: () => set((s) => ({ engine: createEngine(s.spin, s.rpm), playing: false })),
+  setTimeScale: (timeScale) => set({ timeScale, userTimeScale: timeScale }),
+  setUserTimeScale: (timeScale) => set({ timeScale, userTimeScale: timeScale }),
+  restart: () =>
+    set((s) => ({
+      engine: createEngine(s.spin, s.rpm),
+      playing: false,
+      selectedContactId: null,
+    })),
   stepFrame: () => get().engine.step(PHYSICS_DT),
   setCamera: (camera) => set({ camera }),
   setInspectorMode: (inspectorMode) => set({ inspectorMode }),
@@ -162,5 +183,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       playing: false,
     })
   },
-  clearScenario: () => set({ activeScenarioId: null, scenarioPhase: null }),
+  clearScenario: () =>
+    set({ activeScenarioId: null, scenarioPhase: null, selectedContactId: null }),
+  selectContact: (selectedContactId) => set({ selectedContactId }),
 }))
