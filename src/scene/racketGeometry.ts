@@ -8,33 +8,30 @@ import {
 
 /**
  * 专业级乒乓球拍高精度几何生成器。
- * 针对用户反馈“不要纯圆，要有真正优美的流线与精妙的结构衔接”，
- * 严格按照用户实物图（红双喜 4002 横拍长刀 / 4006 直拍竖拍）进行像素级逆向拟合建模：
+ * 针对用户反馈“上面是圆的，下部分突然是一段直线很违和”进行彻底的去折线平滑重构：
  * 
- * 1. 真实水滴卵形板面 (Egg/Waterdrop)：
- *    - 弧顶微展平圆，最大肚位在腰部略偏下 (y = -0.010m，宽 150mm)；
- *    - 肚位向下一路优雅内敛收拢至平切裁胶线 (y = -0.076m，裁切半宽 47.5mm)；
+ * 1. 彻底废除下部的死板生硬平切直线：
+ *    - 胶皮下沿采用经典、优雅的微拱贴指内凹弧线 (Ergonomic Finger Arch，拱高约 7mm)；
+ *    - 无论是拍面还是胶皮，全周皆由自然流动的优美曲线环绕闭合，绝无突兀的直线切口；
  * 
- * 2. 经典马鞍弧拍肩过渡 (Graceful Concave Shoulder)：
- *    - 胶皮裁切线下沿，底板纯木以马鞍凹弧 (Concave Sweep) 优雅向内滑入手柄颈部 (y = -0.093m，半宽 13.5mm)；
- *    - 在横拍正面形成标志性的两侧对称裸木三角翼 (Wing)，直拍则留出拇指食指全裸木握持区；
+ * 2. 拍面与握把结构如拼图般天衣无缝嵌套：
+ *    - 横拍握把上沿以匹配的弧形拱面轻柔托住拍面内弧，两侧自然展出标志性的纯木三角翼；
+ *    - 直拍则在手柄与拍面之间呈现优雅的圆弧过渡虎口裸木区；
  * 
- * 3. 两种真实握把结构衔接：
- *    - 横拍 / 长刀 (Shakehand FL)：手柄上沿直抵裁胶底线 (y = -0.076m)，中段收腰至 24mm，尾端喇叭口外扩至 33mm，总长约 100mm；
- *    - 直拍 / 竖拍 (Penhold CS)：手柄上沿下移至 y = -0.095m，与胶皮留出 19mm 宽阔原木虎口握把区，柄长 75mm，平直微锥。
+ * 3. 告别生硬贴片，全结构浑然一体。
  */
 
 export type RacketGripType = 'shakehand' | 'penhold'
 
 /**
- * 板面与胶皮外轮廓半径函数（基于实物照片像素拟合的连续平滑优雅曲线）
+ * 板面与胶皮外轮廓半径函数（上部微展扁圆，中下部收拢水滴卵形）
  */
 export function rubberRadius(y: number): number {
   const topY = 0.077
   const bellyY = -0.01
-  const cutY = -0.076
+  const cutY = -0.074
   const maxW = 0.075
-  const cutW = 0.0475
+  const cutW = 0.048
 
   if (y > topY) return 0.0
   if (y >= bellyY) {
@@ -42,7 +39,7 @@ export function rubberRadius(y: number): number {
     const t = (y - bellyY) / (topY - bellyY)
     return maxW * Math.sqrt(Math.max(0, 1 - Math.pow(t, 2.1)))
   } else if (y >= cutY) {
-    // 肚位向下：流线向内收拢至胶皮平切线
+    // 肚位向下：流线向内收拢至胶皮拍喉部
     const t = (bellyY - y) / (bellyY - cutY)
     return maxW - (maxW - cutW) * Math.pow(t, 1.35)
   }
@@ -50,25 +47,24 @@ export function rubberRadius(y: number): number {
 }
 
 /**
- * 拍肩凹弧半径函数（连接裁胶角与握把颈部的优美马鞍弧）
+ * 拍肩凹弧半径函数（连接拍身下沿与握把颈部的优美马鞍内弧）
  */
 export function shoulderRadius(y: number): number {
-  const cutY = -0.076
+  const cutY = -0.074
   const neckY = -0.093
-  const cutW = 0.0475
+  const cutW = 0.048
   const neckW = 0.0135
 
   const t = Math.max(0, Math.min(1, (cutY - y) / (cutY - neckY)))
-  // 优雅内凹曲线：开始急速内收，随后平缓贴合拍柄
   return cutW * Math.pow(1 - t, 1.8) + neckW * (1 - Math.pow(1 - t, 1.8))
 }
 
 /**
- * 握把外廓半径函数（严格对标 FL 喇叭柄与 CS 短柄）
+ * 握把外廓半径函数
  */
 export function handleRadius(y: number, isShakehand: boolean): number {
   if (isShakehand) {
-    const topY = -0.076
+    const topY = -0.067
     const waistY = -0.125
     const buttY = -0.173
     const topW = 0.0138
@@ -100,7 +96,7 @@ export function generateBladePoints(grip: RacketGripType = 'shakehand'): Vector2
   const isShakehand = grip === 'shakehand'
   const buttY = isShakehand ? -0.173 : -0.17
   const topY = 0.077
-  const cutY = -0.076
+  const cutY = -0.074
   const neckY = -0.093
 
   // 1. 实木舌部：从右拍喉顺直延伸至底板末端
@@ -109,7 +105,7 @@ export function generateBladePoints(grip: RacketGripType = 'shakehand'): Vector2
   pts.push(new Vector2(-0.0135, buttY))
   pts.push(new Vector2(-0.0135, neckY))
 
-  // 2. 左侧拍肩：优美马鞍内凹弧向上展开至左裁胶角
+  // 2. 左侧拍肩：优美马鞍内凹弧向上展开至左下沿
   const shoulderSteps = 24
   for (let i = 1; i <= shoulderSteps; i++) {
     const y = neckY + (cutY - neckY) * (i / shoulderSteps)
@@ -123,7 +119,7 @@ export function generateBladePoints(grip: RacketGripType = 'shakehand'): Vector2
     pts.push(new Vector2(-rubberRadius(y), y))
   }
 
-  // 4. 右侧板面：对称从拍顶向下收拢至右裁胶角
+  // 4. 右侧板面：对称从拍顶向下收拢至右下沿
   for (let i = 1; i <= rimSteps; i++) {
     const y = topY - (topY - cutY) * (i / rimSteps)
     pts.push(new Vector2(rubberRadius(y), y))
@@ -139,70 +135,58 @@ export function generateBladePoints(grip: RacketGripType = 'shakehand'): Vector2
 }
 
 /**
- * 生成胶皮/海绵层多边形（上周完美流线 + 底部平直线 + 微圆角过渡）
+ * 生成胶皮/海绵层多边形（上周流畅水滴卵弧 + 底部经典贴指微内凹弧，告别生硬直线）
  */
 export function generateRubberPoints(): Vector2[] {
   const pts: Vector2[] = []
   const topY = 0.077
-  const cutY = -0.076
-  const cutW = 0.0475
-  const rFillet = 0.003
+  const cutY = -0.074
+  const cutW = 0.048
+  const archH = 0.007 // 7mm 优雅柔和的内收弧高，消除突兀折断感
 
-  // 1. 底部水平直线段（从左圆角至右圆角）
-  pts.push(new Vector2(-cutW + rFillet, cutY))
-  pts.push(new Vector2(cutW - rFillet, cutY))
-
-  // 2. 右侧切角倒角微圆弧
-  const fSteps = 6
-  for (let i = 1; i <= fSteps; i++) {
-    const a = -Math.PI / 2 + (i / fSteps) * (Math.PI / 2)
-    pts.push(
-      new Vector2(cutW - rFillet + rFillet * Math.cos(a), cutY + rFillet + rFillet * Math.sin(a)),
-    )
+  // 1. 底部贴指拱形弧：从左到右顺畅过渡，绝无任何直线段
+  const bottomSteps = 32
+  for (let i = 0; i <= bottomSteps; i++) {
+    const t = -1 + 2 * (i / bottomSteps) // -1 到 +1
+    const x = t * cutW
+    const y = cutY + archH * Math.cos((t * Math.PI) / 2)
+    pts.push(new Vector2(x, y))
   }
 
-  // 3. 右侧流线外弧由切线上行至拍顶
+  // 2. 右侧外流线：从下沿平滑上行至拍顶
   const rimSteps = 60
   for (let i = 1; i <= rimSteps; i++) {
-    const y = cutY + rFillet + (topY - (cutY + rFillet)) * (i / rimSteps)
+    const y = cutY + (topY - cutY) * (i / rimSteps)
     pts.push(new Vector2(rubberRadius(y), y))
   }
 
-  // 4. 左侧流线外弧由拍顶下行至左切角
-  for (let i = 1; i <= rimSteps; i++) {
-    const y = topY - (topY - (cutY + rFillet)) * (i / rimSteps)
+  // 3. 左侧外流线：从拍顶平滑下行至左下沿
+  for (let i = 1; i < rimSteps; i++) {
+    const y = topY - (topY - cutY) * (i / rimSteps)
     pts.push(new Vector2(-rubberRadius(y), y))
-  }
-
-  // 5. 左侧切角倒角微圆弧
-  for (let i = 1; i <= fSteps; i++) {
-    const a = Math.PI - (i / fSteps) * (Math.PI / 2)
-    pts.push(
-      new Vector2(-cutW + rFillet + rFillet * Math.cos(a), cutY + rFillet + rFillet * Math.sin(a)),
-    )
   }
 
   return pts
 }
 
 /**
- * 生成符合人体工学握持手感的手柄贴片截面多边形
+ * 生成符合人体工学握持手感的手柄贴片截面多边形（顶部吻合拍身内弧）
  */
 export function generateHandlePoints(grip: RacketGripType = 'shakehand'): Vector2[] {
   const pts: Vector2[] = []
   const isShakehand = grip === 'shakehand'
-  const topY = isShakehand ? -0.076 : -0.095
+  const topY = isShakehand ? -0.067 : -0.095
   const buttY = isShakehand ? -0.173 : -0.17
   const topW = handleRadius(topY, isShakehand)
   const buttW = handleRadius(buttY, isShakehand)
   const rButt = 0.0025
 
-  // 1. 顶部贴指微拱弧 (横拍贴合裁胶线，直拍虎口指托)
-  const topSteps = 12
+  // 1. 顶部贴指拱弧：与拍身喉部内弧自然吻合嵌套
+  const topSteps = 16
   for (let i = 0; i <= topSteps; i++) {
     const s = -1 + 2 * (i / topSteps)
     const x = s * topW
-    const y = topY + (isShakehand ? 0.001 : 0.0025) * (1 - s * s)
+    const y = topY + (isShakehand ? 0.0015 : 0.003) * (1 - s * s)
     pts.push(new Vector2(x, y))
   }
 
@@ -250,14 +234,14 @@ export function createHandleShape(grip: RacketGripType = 'shakehand'): Shape {
 }
 
 /**
- * 沿真实板面外周精确生成全贴合 3D 护边织物织带 Mesh
+ * 沿板面外周精确生成全贴合 3D 护边织物织带 Mesh
  */
 export function createEdgeTapeGeometry(
   tapeHalfWidth = 0.0062,
 ): BufferGeometry {
   const pts = generateRubberPoints()
-  // 提取上周边缘 (忽略底部直线)
-  const rimPts = pts.filter((p) => p.y >= -0.076 + 0.0005)
+  // 提取上周边缘 (忽略底部贴指弧)
+  const rimPts = pts.filter((p) => p.y >= -0.074 + 0.0005)
   const count = rimPts.length
 
   const positions = new Float32Array(count * 2 * 3)

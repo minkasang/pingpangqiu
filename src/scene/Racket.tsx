@@ -83,7 +83,6 @@ export function Racket() {
   const buttY = isShakehand ? -0.173 : -0.17
   const stripeLength = isShakehand ? 0.09 : 0.07
   const stripeY = isShakehand ? -0.124 : -0.132
-  const stampY = -0.0705
 
   return (
     <group
@@ -113,7 +112,7 @@ export function Racket() {
         <meshStandardMaterial color="#ea580c" roughness={0.8} />
       </mesh>
 
-      {/* 3. 正面顶级红双喜/狂飙粘性反胶胶皮 (平切平底，纯正国乒大红微哑光) */}
+      {/* 3. 正面顶级红双喜/狂飙粘性反胶胶皮 (纯正国乒大红微哑光，全周优美微内凹贴指流线) */}
       <mesh geometry={geos.rubberGeo} position={[0, 0, -0.0056]} castShadow>
         <meshPhysicalMaterial
           color="#d0121a"
@@ -122,12 +121,6 @@ export function Racket() {
           clearcoat={0.14}
           clearcoatRoughness={0.24}
         />
-      </mesh>
-
-      {/* 正面胶皮底部平切处标志性 ITTF 钢印标区域 (DHS 狂飙认证压痕) */}
-      <mesh position={[0, stampY, -0.0064]}>
-        <planeGeometry args={[0.086, 0.009]} />
-        <meshStandardMaterial color="#a7141d" roughness={0.4} />
       </mesh>
 
       {/* 4. 反面高弹海绵层 (蓝色，+Z 侧) */}
@@ -144,12 +137,6 @@ export function Racket() {
           clearcoat={0.14}
           clearcoatRoughness={0.24}
         />
-      </mesh>
-
-      {/* 反面胶皮底部 ITTF 钢印标区域 */}
-      <mesh position={[0, stampY, 0.0064]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[0.086, 0.009]} />
-        <meshStandardMaterial color="#262626" roughness={0.4} />
       </mesh>
 
       {/* 6. 贴合拍头外轮廓的专业黑色织物护边带 (Edge Tape) */}
