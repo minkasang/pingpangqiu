@@ -20,7 +20,8 @@ interface ControlsLike {
  * 拖拽时禁用 OrbitControls，避免视角旋转与位置拖动冲突。
  */
 export function Racket() {
-  const geos = useMemo(() => createRacketGeometries(), [])
+  const grip = useSimStore((s) => s.racketGrip)
+  const geos = useMemo(() => createRacketGeometries(grip), [grip])
   const control = useSimStore((s) => s.racketControl)
   const setRacketControl = useSimStore((s) => s.setRacketControl)
   const showRacketVelocity = useSimStore((s) => s.display.racketVelocity)
@@ -77,6 +78,13 @@ export function Racket() {
     }
   }
 
+  const isShakehand = grip === 'shakehand'
+  const lensY = isShakehand ? -0.144 : -0.126
+  const buttY = isShakehand ? -0.172 : -0.152
+  const stripeLength = isShakehand ? 0.092 : 0.072
+  const stripeY = isShakehand ? -0.12 : -0.11
+  const stampY = isShakehand ? -0.0465 : -0.0425
+
   return (
     <group
       ref={group}
@@ -95,114 +103,119 @@ export function Racket() {
         dragging.current = false
       }}
     >
-      {/* 1. 五层纯木底板 (含水滴卵形板面与向下贯穿手柄的实木舌部) */}
+      {/* 1. 五层纯木底板 (饱满水滴卵形板面 + 大面积纯木拍肩 + 贯穿木舌，真实浅原木色) */}
       <mesh geometry={geos.bladeGeo} castShadow receiveShadow>
-        <meshStandardMaterial color="#c89666" roughness={0.52} metalness={0.04} />
+        <meshStandardMaterial color="#eedbb2" roughness={0.65} metalness={0.02} />
       </mesh>
 
       {/* 2. 正面高弹蛋糕海绵层 (橙色，面对来球 -Z 侧) */}
       <mesh geometry={geos.spongeGeo} position={[0, 0, -0.0038]} castShadow>
-        <meshStandardMaterial color="#ea580c" roughness={0.78} />
+        <meshStandardMaterial color="#ea580c" roughness={0.8} />
       </mesh>
 
-      {/* 3. 正面顶级粘性反胶胶皮 (红双喜狂飙/蝴蝶红反胶微哑光质感) */}
+      {/* 3. 正面顶级红双喜/狂飙粘性反胶胶皮 (平切平底，纯正国乒大红微哑光) */}
       <mesh geometry={geos.rubberGeo} position={[0, 0, -0.0056]} castShadow>
         <meshPhysicalMaterial
-          color="#be123c"
+          color="#d0121a"
           roughness={0.32}
           metalness={0.02}
-          clearcoat={0.16}
-          clearcoatRoughness={0.25}
+          clearcoat={0.14}
+          clearcoatRoughness={0.24}
         />
       </mesh>
 
-      {/* 正面胶皮底部 ITTF 认证标凹凸标记区 */}
-      <mesh position={[0, -0.025, -0.0066]}>
-        <planeGeometry args={[0.038, 0.012]} />
-        <meshStandardMaterial color="#9f1239" roughness={0.4} />
+      {/* 正面胶皮底部平切处标志性 ITTF 钢印标区域 (DHS 狂飙认证压痕) */}
+      <mesh position={[0, stampY, -0.0066]}>
+        <planeGeometry args={[0.095, 0.01]} />
+        <meshStandardMaterial color="#a7141d" roughness={0.4} />
       </mesh>
 
       {/* 4. 反面高弹海绵层 (蓝色，+Z 侧) */}
       <mesh geometry={geos.spongeGeo} position={[0, 0, 0.0038]} castShadow>
-        <meshStandardMaterial color="#2563eb" roughness={0.78} />
+        <meshStandardMaterial color="#2563eb" roughness={0.8} />
       </mesh>
 
-      {/* 5. 反面专业反胶胶皮 (碳素深黑质感) */}
+      {/* 5. 反面专业反胶胶皮 (经典碳素墨黑) */}
       <mesh geometry={geos.rubberGeo} position={[0, 0, 0.0056]} castShadow>
         <meshPhysicalMaterial
-          color="#171717"
+          color="#141414"
           roughness={0.32}
           metalness={0.02}
-          clearcoat={0.16}
-          clearcoatRoughness={0.25}
+          clearcoat={0.14}
+          clearcoatRoughness={0.24}
         />
       </mesh>
 
-      {/* 反面胶皮底部 ITTF 认证标 */}
-      <mesh position={[0, -0.025, 0.0066]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[0.038, 0.012]} />
+      {/* 反面胶皮底部 ITTF 钢印标区域 */}
+      <mesh position={[0, stampY, 0.0066]} rotation={[0, Math.PI, 0]}>
+        <planeGeometry args={[0.095, 0.01]} />
         <meshStandardMaterial color="#262626" roughness={0.4} />
       </mesh>
 
-      {/* 6. 全贴合专业黑色织物护边带 (Edge Tape) */}
+      {/* 6. 贴合拍头外轮廓的专业黑色织物护边带 (Edge Tape) */}
       <mesh geometry={geos.edgeTapeGeo}>
-        <meshStandardMaterial color="#0f172a" roughness={0.45} metalness={0.2} />
+        <meshStandardMaterial color="#0f172a" roughness={0.42} metalness={0.18} />
       </mesh>
 
-      {/* 7. FL (Flared) 人体工学拼木收腰手柄贴片 (前后面各一片，夹持实木底板舌部) */}
-      {/* 正面手柄贴片 */}
-      <group position={[0, 0, -0.0066]}>
+      {/* 7. 手柄握把贴片 (正反两面，经典红双喜红木底色 + 浅象牙双跑道条纹 + 椭圆水晶标) */}
+      {/* 正面手柄 */}
+      <group position={[0, 0, -0.0067]}>
         <mesh geometry={geos.handleGeo} castShadow>
-          <meshStandardMaterial color="#451a03" roughness={0.58} />
+          <meshStandardMaterial color="#781d22" roughness={0.55} />
         </mesh>
-        {/* 手柄两侧枫木防滑拼接细饰条 */}
+        {/* 正面两根红双喜标志性乳白/米黄双拼防滑条纹 */}
         {[-1, 1].map((side) => (
-          <mesh key={`handle-stripe-front-${side}`} position={[side * 0.006, -0.114, -0.004]}>
-            <boxGeometry args={[0.002, 0.096, 0.0006]} />
-            <meshStandardMaterial color="#fbbf24" roughness={0.5} />
+          <mesh key={`handle-stripe-front-${side}`} position={[side * 0.0048, stripeY, -0.0042]}>
+            <boxGeometry args={[0.0022, stripeLength, 0.0006]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.5} />
           </mesh>
         ))}
-        {/* 正面中央水晶透镜标牌 (Crystal Lens) */}
-        <group position={[0, -0.138, -0.004]}>
-          {/* 金属底牌 */}
+        {/* 红双喜椭圆水晶标牌 (黑色椭圆底 + 金色 ★★★★ 标徽 + 弧面透镜) */}
+        <group position={[0, lensY, -0.0043]}>
+          {/* 黑色底牌 */}
           <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[0.013, 0.023, 0.0008]} />
-            <meshStandardMaterial color="#eab308" metalness={0.88} roughness={0.25} />
+            <boxGeometry args={[0.014, 0.024, 0.0008]} />
+            <meshStandardMaterial color="#0a0a0c" roughness={0.3} metalness={0.5} />
           </mesh>
-          {/* 弧面亚克力透镜外罩 */}
-          <mesh position={[0, 0, -0.0006]}>
-            <boxGeometry args={[0.0145, 0.0245, 0.0012]} />
+          {/* 金色 DHS 星级标记嵌件 */}
+          <mesh position={[0, 0, -0.0005]}>
+            <boxGeometry args={[0.009, 0.016, 0.0004]} />
+            <meshStandardMaterial color="#fbbf24" metalness={0.88} roughness={0.25} />
+          </mesh>
+          {/* 弧面透明有机玻璃透镜 */}
+          <mesh position={[0, 0, -0.0008]}>
+            <boxGeometry args={[0.0146, 0.0246, 0.0012]} />
             <meshPhysicalMaterial
               color="#ffffff"
-              transmission={0.85}
-              roughness={0.1}
+              transmission={0.88}
+              roughness={0.08}
               metalness={0.05}
               ior={1.49}
               transparent
-              opacity={0.9}
+              opacity={0.92}
             />
           </mesh>
         </group>
       </group>
 
-      {/* 反面手柄贴片 */}
-      <group position={[0, 0, 0.0066]} rotation={[0, Math.PI, 0]}>
+      {/* 反面手柄 */}
+      <group position={[0, 0, 0.0067]} rotation={[0, Math.PI, 0]}>
         <mesh geometry={geos.handleGeo} castShadow>
-          <meshStandardMaterial color="#451a03" roughness={0.58} />
+          <meshStandardMaterial color="#781d22" roughness={0.55} />
         </mesh>
-        {/* 反面手柄拼木饰条 */}
+        {/* 反面米黄防滑条纹 */}
         {[-1, 1].map((side) => (
-          <mesh key={`handle-stripe-back-${side}`} position={[side * 0.006, -0.114, -0.004]}>
-            <boxGeometry args={[0.002, 0.096, 0.0006]} />
-            <meshStandardMaterial color="#38bdf8" roughness={0.5} />
+          <mesh key={`handle-stripe-back-${side}`} position={[side * 0.0048, stripeY, -0.0042]}>
+            <boxGeometry args={[0.0022, stripeLength, 0.0006]} />
+            <meshStandardMaterial color="#fef3c7" roughness={0.5} />
           </mesh>
         ))}
       </group>
 
-      {/* 8. 拍柄底部金属底标牌 (蝴蝶金标/红双喜铭牌) */}
-      <mesh position={[0, -0.165, 0]}>
-        <boxGeometry args={[0.022, 0.0035, 0.018]} />
-        <meshStandardMaterial color="#eab308" metalness={0.88} roughness={0.25} />
+      {/* 8. 拍柄底部金属铭牌 (蝴蝶金标/红双喜底部拉丝金标) */}
+      <mesh position={[0, buttY, 0]}>
+        <boxGeometry args={[0.022, 0.003, 0.018]} />
+        <meshStandardMaterial color="#eab308" metalness={0.9} roughness={0.22} />
       </mesh>
 
       {showRacketVelocity && (

@@ -55,10 +55,32 @@ function exportVelocity(action: RacketAction, speed: number) {
 export function RacketControlPanel() {
   const control = useSimStore((s) => s.racketControl)
   const setRacketControl = useSimStore((s) => s.setRacketControl)
+  const grip = useSimStore((s) => s.racketGrip)
+  const setGrip = useSimStore((s) => s.setRacketGrip)
 
   return (
     <aside className="panel panel-racket">
       <h2>球拍</h2>
+
+      <div className="racket-section">
+        <h3>拍型 / 握把</h3>
+        <div className="action-row" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '8px' }}>
+          <button
+            className={grip === 'shakehand' ? 'active' : ''}
+            onClick={() => setGrip('shakehand')}
+            title="横拍 / 长刀 (Shakehand FL 100mm 长柄)"
+          >
+            长柄 · 横拍 (长刀)
+          </button>
+          <button
+            className={grip === 'penhold' ? 'active' : ''}
+            onClick={() => setGrip('penhold')}
+            title="直拍 / 竖拍 (Penhold CS 80mm 短柄)"
+          >
+            短柄 · 直拍 (竖拍)
+          </button>
+        </div>
+      </div>
 
       <div className="racket-section">
         <h3>位置</h3>

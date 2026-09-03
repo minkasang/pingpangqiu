@@ -71,6 +71,8 @@ const DEFAULT_DISPLAY: DisplayOptions = {
   contactDebug: false,
 }
 
+export type RacketGripType = 'shakehand' | 'penhold'
+
 interface SimStore {
   spin: SpinType
   rpm: number
@@ -81,6 +83,8 @@ interface SimStore {
   camera: CameraPreset
   inspectorMode: InspectorMode
   racketControl: RacketControl
+  /** 球拍握把类型：横拍长刀 (shakehand) vs 直拍竖拍 (penhold) */
+  racketGrip: RacketGripType
   /** 当前激活的教学场景（null = 自由模式） */
   activeScenarioId: ScenarioId | null
   /** 当前在演示错误还是正确拍位 */
@@ -112,6 +116,7 @@ interface SimStore {
   setInspectorMode: (mode: InspectorMode) => void
   toggleDisplay: (key: keyof DisplayOptions) => void
   setRacketControl: (partial: Partial<RacketControl>) => void
+  setRacketGrip: (grip: RacketGripType) => void
   toggleSound: () => void
   toggleLeftPanel: () => void
   toggleRightPanel: () => void
@@ -140,6 +145,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   camera: 'side',
   inspectorMode: 'physics',
   racketControl: DEFAULT_RACKET_CONTROL,
+  racketGrip: 'shakehand',
   activeScenarioId: null,
   scenarioPhase: null,
   selectedContactId: null,
@@ -168,6 +174,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   toggleDisplay: (key) =>
     set((s) => ({ display: { ...s.display, [key]: !s.display[key] } })),
   setRacketControl: (partial) => set((s) => ({ racketControl: { ...s.racketControl, ...partial } })),
+  setRacketGrip: (racketGrip) => set({ racketGrip }),
   toggleSound: () => {
     const next = !get().soundEnabled
     sound.setEnabled(next)
