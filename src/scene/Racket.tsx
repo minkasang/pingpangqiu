@@ -79,11 +79,11 @@ export function Racket() {
   }
 
   const isShakehand = grip === 'shakehand'
-  const lensY = isShakehand ? -0.144 : -0.126
-  const buttY = isShakehand ? -0.172 : -0.152
-  const stripeLength = isShakehand ? 0.092 : 0.072
-  const stripeY = isShakehand ? -0.12 : -0.11
-  const stampY = isShakehand ? -0.0465 : -0.0425
+  const lensY = isShakehand ? -0.144 : -0.138
+  const buttY = isShakehand ? -0.173 : -0.17
+  const stripeLength = isShakehand ? 0.09 : 0.07
+  const stripeY = isShakehand ? -0.124 : -0.132
+  const stampY = -0.0705
 
   return (
     <group
@@ -126,7 +126,7 @@ export function Racket() {
 
       {/* 正面胶皮底部平切处标志性 ITTF 钢印标区域 (DHS 狂飙认证压痕) */}
       <mesh position={[0, stampY, -0.0064]}>
-        <planeGeometry args={[0.095, 0.01]} />
+        <planeGeometry args={[0.086, 0.009]} />
         <meshStandardMaterial color="#a7141d" roughness={0.4} />
       </mesh>
 
@@ -148,7 +148,7 @@ export function Racket() {
 
       {/* 反面胶皮底部 ITTF 钢印标区域 */}
       <mesh position={[0, stampY, 0.0064]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[0.095, 0.01]} />
+        <planeGeometry args={[0.086, 0.009]} />
         <meshStandardMaterial color="#262626" roughness={0.4} />
       </mesh>
 
