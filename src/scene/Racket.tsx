@@ -80,9 +80,9 @@ export function Racket() {
 
   const isShakehand = grip === 'shakehand'
   const lensY = isShakehand ? -0.144 : -0.138
-  const buttY = isShakehand ? -0.173 : -0.17
-  const stripeLength = isShakehand ? 0.09 : 0.07
-  const stripeY = isShakehand ? -0.124 : -0.132
+  const buttY = isShakehand ? -0.173 : -0.168
+  const stripeLength = isShakehand ? 0.096 : 0.07
+  const stripeY = isShakehand ? -0.12 : -0.128
 
   return (
     <group
