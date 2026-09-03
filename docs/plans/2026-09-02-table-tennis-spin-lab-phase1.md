@@ -192,3 +192,116 @@ Phase 1 已完成并经用户确认。Phase 2 目标：球拍成为可交互物�
 
 ### Task 18 — Phase 2 行为测试
 - 顶/托/角度/预测确定性；默认拍位下上旋发球可被挡回
+
+---
+
+# Phase 3 — Teaching Scenarios（2026-09-02 完成）
+
+## 目标
+按 spec §22 Phase 3：接收上旋 / 下旋 / 左侧旋 / 右侧旋 + 错误动作 vs 正确动作。
+
+## 设计
+- `physics/scenarios.ts` 定义 4 个场景，每个含 spin / wrong / correct 拍位 / 失败原因 / 教学原因
+- `applyScenario(id)`：锁定旋转 + 转速、应用「错误拍位」、暂停
+- `applyScenarioCorrect()` / `revertScenarioToWrong()`：在场景内切换
+- GhostTrajectory 场景激活时同时画两条预测虚线（青色=当前 / 黄绿=正确接法）
+- PhysicsInspector Beginner 模式显示「教学要点」区块
+- 测试：6 项，覆盖 4 种场景的错误 vs 正确方向差异
+
+## 完成
+- ✓ 64/64 测试
+- ✓ tsc --noEmit 通过
+- ✓ commit a809ad6 已推 origin/master
+
+---
+
+# Phase 4 — Visualization（2026-09-02 进行中）
+
+## 目标
+按 spec §22 Phase 4：Macro Contact View / 力矢量 / 碰撞检查器 / before / after / 轨迹对比。
+
+## 任务（已创建，状态见任务列表）
+- Task 23 — 接触点编号 ①②③ + PhysicsInspector 增加「接触」区域（点击展开 before/after：速度/转速/旋转轴/法向冲量/摩擦冲量/滑移速度）
+- Task 24 — 选中接触点时，在接触位置显示 N（绿）+ 摩擦冲量（橙）矢量
+- Task 25 — Macro Contact View：球距球拍 <10cm 时 timeScale 0.1×；<3cm 推近镜头、球放大、显示接触点切向速度、轻微视觉夸张（球压缩）
+- Task 26 — 微观状态测试：useMacroView 纯函数 + 接触点编号稳定
+
+## 设计要点
+- Macro 触发距离阈值从 useSimStore 读取（常量写源码顶部）
+- 选中接触点用 store 中 `selectedContactId: number | null` 维护
+- 接触点编号按 engine.contacts 顺序稳定：① ② ③…
+- 力矢量在 BallOverlays 外单独组件，避免双重变换
+
+---
+
+# Phase 5 — Polish（未开始）
+按 spec §22 Phase 5：灯光 / 材质 / UI / 镜头动画 / 响应式 / 性能 / 可访问性。
+
+## 已做（散落各阶段）
+- 灯光、相机预设、OrbitControls 阻尼
+- 颜色/动效克制（spec §19, §20）
+- 教学文案、因果链表述
+- 自动化测试覆盖所有物理方向
+
+## 剩余可考虑
+- 球体材质（程序化磨砂 / 渐变高光）
+- 桌面抗反射（contactShadows）
+- 球拍/桌面 PBR 材质、胶皮程序纹理
+- 移动端响应式（面板折叠、触屏拖动）
+- 可访问性（键盘快捷键、ARIA、reduce-motion）
+- 性能：DRACO 压缩、代码分割（drei 太大）
+
+---
+
+# 总体文件结构（持续更新）
+
+```
+src/
+  physics/
+    constants.ts    坐标系 / 球台 / 球 / 空气 / Magnus / 接触
+    types.ts        BallState / SpinType / ContactInfo / ContactEvent / TrajectorySample
+    spin.ts         7 种旋转 → ω 向量
+    forces.ts       gravity / drag / magnus
+    contact.ts      球台/球拍共用接触求解
+    surface.ts      BoxSurface + 解析检测
+    engine.ts       TableTennisPhysicsEngine + predictTrajectory
+    launch.ts       每种旋转对应合法发球（先落发球方台面，过网，再落接球方台面）
+    racket.ts       RacketControl + 5 动作 + pitch/yaw/roll → 四元数 + buildRacketSurface
+    scenarios.ts    4 教学场景：错误 vs 正确接法
+    *.test.ts       单元测试（64 项）
+  scene/
+    Scene.tsx       Canvas 内容装配
+    Table.tsx       程序化球台 + 白线 + 球网 + 桌腿
+    Ball.tsx        球 + 表面色环/极点标记（姿态由 store 驱动）
+    BallOverlays.tsx 跟随球心：旋转轴、旋转环、速度三分量、力
+    Racket.tsx      store 驱动姿态 + 直接拖拽 + 球拍速度箭头
+    RotationRing.tsx 随 ω 方向、箭头按右手定则
+    SpinAxis.tsx    旋转轴 + ω 标签
+    VectorArrow.tsx 通用箭头（原点在父级）
+    TrajectoryTrail.tsx 实际轨迹拖尾
+    GhostTrajectory.tsx 预测轨迹（场景激活时双虚线）
+    PhysicsDebug.tsx 碰撞体线框 + 接触点/法线
+    CameraRig.tsx   预设机位 + 拖拽时释放控制权
+    Lighting.tsx    半球光 + 主光 + 补光
+  state/useSimStore.ts zustand：spin/rpm/engine/playing/display/camera/racketControl/scenario
+  ui/
+    SpinLibrary.tsx         7 选 + 转速 + 运行
+    ScenariosPanel.tsx      4 教学场景 + 错误/正确切换
+    DisplayOptionsPanel.tsx 14 个独立开关
+    PhysicsInspector.tsx    Beginner/Physics 双模式
+    RacketControlPanel.tsx  位置/角度/动作/速度
+    ControlBar.tsx          播放/速率/机位
+    Timeline.tsx            时间轴（确定性拖动）
+  theme.ts           调色板 + 机位枚举
+  App.tsx            布局：左 aside (旋转库/场景/显示) + 3D + 右 aside (检查器/球拍) + 底部控制
+```
+
+---
+
+# 工作流约定（续作时请沿用）
+
+1. **superpowers 工作流**（已写入 memory）：brainstorming → writing-plans → subagent-driven-development / executing-plans → TDD → verification-before-completion
+2. **物理方向正确性是底线**：所有视觉/UI 改完都必须 `pnpm vitest run` 全绿
+3. **每阶段 commit + 推送**：用户已说明从其环境直接 git push，本沙箱 TLS 不可达
+4. **新 AI 接续**先 `pnpm typecheck && pnpm vitest run` 确认状态，再读本计划文档与 src/physics/scenarios.ts 续作
+
