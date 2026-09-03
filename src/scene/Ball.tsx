@@ -71,8 +71,14 @@ export function Ball() {
   return (
     <group ref={group}>
       <mesh ref={ballMesh} castShadow>
-        <sphereGeometry args={[R, 48, 32]} />
-        <meshStandardMaterial color={PALETTE.ball} roughness={0.4} metalness={0.02} />
+        <sphereGeometry args={[R, 64, 48]} />
+        <meshPhysicalMaterial
+          color={PALETTE.ball}
+          roughness={0.28}
+          metalness={0.01}
+          clearcoat={0.18}
+          clearcoatRoughness={0.35}
+        />
       </mesh>
       <BallMarkings />
     </group>

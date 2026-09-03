@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { sound } from '../audio/sound'
 import { PHYSICS_DT } from '../physics/constants'
 import { TableTennisPhysicsEngine } from '../physics/engine'
 import { LAUNCH_PROFILES } from '../physics/launch'
@@ -90,6 +91,14 @@ interface SimStore {
   autoMacro: boolean
   /** 用户期望的时间速度（自动慢放会临时覆盖） */
   userTimeScale: number
+  /** 是否启用击球合成音效 */
+  soundEnabled: boolean
+  /** 左侧面板折叠 */
+  leftCollapsed: boolean
+  /** 右侧面板折叠 */
+  rightCollapsed: boolean
+  /** 快捷键指南浮层是否开启 */
+  shortcutsOpen: boolean
 
   setSpin: (spin: SpinType) => void
   setRpm: (rpm: number) => void
@@ -103,6 +112,11 @@ interface SimStore {
   setInspectorMode: (mode: InspectorMode) => void
   toggleDisplay: (key: keyof DisplayOptions) => void
   setRacketControl: (partial: Partial<RacketControl>) => void
+  toggleSound: () => void
+  toggleLeftPanel: () => void
+  toggleRightPanel: () => void
+  setShortcutsOpen: (open: boolean) => void
+  toggleShortcuts: () => void
   /** 进入某个场景：设置旋转、转速、应用「错误拍位」并暂停 */
   applyScenario: (id: ScenarioId) => void
   /** 切换到场景中的正确拍位（不影响旋转）））） */
@@ -131,6 +145,10 @@ export const useSimStore = create<SimStore>((set, get) => ({
   selectedContactId: null,
   autoMacro: true,
   userTimeScale: 1,
+  soundEnabled: true,
+  leftCollapsed: false,
+  rightCollapsed: false,
+  shortcutsOpen: false,
 
   setSpin: (spin) => set((s) => ({ spin, engine: createEngine(spin, s.rpm), playing: false })),
   setRpm: (rpm) => set((s) => ({ rpm, engine: createEngine(s.spin, rpm), playing: false })),
@@ -150,6 +168,15 @@ export const useSimStore = create<SimStore>((set, get) => ({
   toggleDisplay: (key) =>
     set((s) => ({ display: { ...s.display, [key]: !s.display[key] } })),
   setRacketControl: (partial) => set((s) => ({ racketControl: { ...s.racketControl, ...partial } })),
+  toggleSound: () => {
+    const next = !get().soundEnabled
+    sound.setEnabled(next)
+    set({ soundEnabled: next })
+  },
+  toggleLeftPanel: () => set((s) => ({ leftCollapsed: !s.leftCollapsed })),
+  toggleRightPanel: () => set((s) => ({ rightCollapsed: !s.rightCollapsed })),
+  setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
+  toggleShortcuts: () => set((s) => ({ shortcutsOpen: !s.shortcutsOpen })),
 
   applyScenario: (id) => {
     const scenario = getScenario(id)

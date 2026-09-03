@@ -4,7 +4,6 @@ import type { Group } from 'three'
 import { Plane, Vector3 } from 'three'
 import { computeRacketQuaternion, computeRacketVelocity } from '../physics/racket'
 import { useSimStore } from '../state/useSimStore'
-import { PALETTE } from '../theme'
 import { VectorArrow } from './VectorArrow'
 
 const X_LIMIT = 0.6
@@ -94,18 +93,72 @@ export function Racket() {
         dragging.current = false
       }}
     >
-      <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.075, 0.075, 0.008, 48]} />
-        <meshStandardMaterial color={PALETTE.racket} roughness={0.85} />
+      {/* 正面红胶皮 (面对来球 -Z 侧) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.0042]} castShadow>
+        <cylinderGeometry args={[0.076, 0.076, 0.0018, 64]} />
+        <meshPhysicalMaterial
+          color="#b91c1c"
+          roughness={0.36}
+          metalness={0.02}
+          clearcoat={0.12}
+          clearcoatRoughness={0.25}
+        />
       </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.008]} castShadow>
-        <cylinderGeometry args={[0.078, 0.078, 0.006, 48]} />
-        <meshStandardMaterial color={PALETTE.racketBlade} roughness={0.55} metalness={0.15} />
+      {/* 正面橙色高弹海绵层 */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.0028]} castShadow>
+        <cylinderGeometry args={[0.0755, 0.0755, 0.0012, 48]} />
+        <meshStandardMaterial color="#f97316" roughness={0.7} />
       </mesh>
-      <mesh position={[0, -0.125, 0.009]} castShadow>
-        <boxGeometry args={[0.028, 0.11, 0.022]} />
-        <meshStandardMaterial color="#5b3a1c" roughness={0.7} />
+
+      {/* 纯木五层底板 (中间层) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.077, 0.077, 0.0055, 64]} />
+        <meshStandardMaterial color="#d97706" roughness={0.52} metalness={0.05} />
       </mesh>
+
+      {/* 侧面黑色专业护边带 (Edge Tape) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <cylinderGeometry args={[0.0774, 0.0774, 0.0088, 64, 1, true]} />
+        <meshStandardMaterial color="#111827" roughness={0.4} metalness={0.2} />
+      </mesh>
+
+      {/* 反面蓝色海绵层 */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.0034]} castShadow>
+        <cylinderGeometry args={[0.0755, 0.0755, 0.0012, 48]} />
+        <meshStandardMaterial color="#2563eb" roughness={0.7} />
+      </mesh>
+      {/* 反面黑胶皮 (+Z 侧) */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 0, 0.0048]} castShadow>
+        <cylinderGeometry args={[0.076, 0.076, 0.0018, 64]} />
+        <meshPhysicalMaterial
+          color="#18181b"
+          roughness={0.36}
+          metalness={0.02}
+          clearcoat={0.12}
+          clearcoatRoughness={0.25}
+        />
+      </mesh>
+
+      {/* FL 收腰人体工学拼木手柄 */}
+      <group position={[0, -0.118, 0]}>
+        {/* 手柄主体 (木纹质感，上细下宽 FL 造型) */}
+        <mesh position={[0, 0, 0]} castShadow>
+          <boxGeometry args={[0.027, 0.096, 0.024]} />
+          <meshStandardMaterial color="#78350f" roughness={0.65} />
+        </mesh>
+        {/* 手柄两侧拼接防滑色块 */}
+        {[-1, 1].map((side) => (
+          <mesh key={`handle-trim-${side}`} position={[side * 0.008, 0, 0]}>
+            <boxGeometry args={[0.005, 0.096, 0.025]} />
+            <meshStandardMaterial color="#b45309" roughness={0.6} />
+          </mesh>
+        ))}
+        {/* 手柄底部金属品牌底标 */}
+        <mesh position={[0, -0.048, 0]}>
+          <boxGeometry args={[0.016, 0.004, 0.014]} />
+          <meshStandardMaterial color="#e2e8f0" metalness={0.8} roughness={0.2} />
+        </mesh>
+      </group>
 
       {showRacketVelocity && (
         <VectorArrow

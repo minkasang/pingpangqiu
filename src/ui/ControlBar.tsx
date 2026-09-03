@@ -50,8 +50,21 @@ export function ControlBar() {
       </div>
 
       <div className="group">
-        <button className={autoMacro ? 'active' : ''} onClick={() => toggleDisplay('autoMacro')}>
+        <button className={autoMacro ? 'active' : ''} onClick={() => toggleDisplay('autoMacro')} title="球接近球拍时自动慢放">
           自动慢放
+        </button>
+        <button
+          className={useSimStore((s) => s.soundEnabled) ? 'active' : ''}
+          onClick={useSimStore((s) => s.toggleSound)}
+          title="击球音效开关 (快捷键 M)"
+        >
+          {useSimStore((s) => s.soundEnabled) ? '🔊 音效' : '🔇 静音'}
+        </button>
+        <button
+          onClick={useSimStore((s) => s.toggleShortcuts)}
+          title="查看键盘快捷键与操作指南 (快捷键 ?)"
+        >
+          ⌨️ 快捷键
         </button>
       </div>
     </div>
