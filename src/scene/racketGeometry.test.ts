@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   createBladeShape,
   createRubberShape,
-  createShakehandHandleShape,
-  createPenholdHandleShape,
-  createOuterRimPath,
+  createHandleShape,
   createEdgeTapeGeometry,
   createRacketGeometries,
 } from './racketGeometry'
@@ -15,27 +13,19 @@ describe('racketGeometry', () => {
     const bladePen = createBladeShape('penhold')
     const rubberShake = createRubberShape('shakehand')
     const rubberPen = createRubberShape('penhold')
-    const handleShake = createShakehandHandleShape()
-    const handlePen = createPenholdHandleShape()
+    const handleShake = createHandleShape('shakehand')
+    const handlePen = createHandleShape('penhold')
 
-    expect(bladeShake.curves.length).toBeGreaterThan(4)
-    expect(bladePen.curves.length).toBeGreaterThan(4)
-    expect(rubberShake.curves.length).toBeGreaterThan(4)
-    expect(rubberPen.curves.length).toBeGreaterThan(4)
-    expect(handleShake.curves.length).toBeGreaterThanOrEqual(4)
-    expect(handlePen.curves.length).toBeGreaterThanOrEqual(4)
-  })
-
-  it('creates continuous outer rim path', () => {
-    const rim = createOuterRimPath('shakehand')
-    const points = rim.getPoints(40)
-    expect(points.length).toBeGreaterThan(40)
-    expect(points[0]!.x).toBeCloseTo(-0.066, 2)
-    expect(points[points.length - 1]!.x).toBeCloseTo(0.066, 2)
+    expect(bladeShake.curves.length).toBeGreaterThan(10)
+    expect(bladePen.curves.length).toBeGreaterThan(10)
+    expect(rubberShake.curves.length).toBeGreaterThan(10)
+    expect(rubberPen.curves.length).toBeGreaterThan(10)
+    expect(handleShake.curves.length).toBeGreaterThan(10)
+    expect(handlePen.curves.length).toBeGreaterThan(10)
   })
 
   it('generates non-empty edge tape buffer geometry with valid attributes', () => {
-    const tape = createEdgeTapeGeometry('shakehand', 0.006, 20)
+    const tape = createEdgeTapeGeometry('shakehand', 0.006)
     expect(tape.getAttribute('position')).toBeDefined()
     expect(tape.getAttribute('normal')).toBeDefined()
     expect(tape.getAttribute('uv')).toBeDefined()

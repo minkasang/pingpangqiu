@@ -125,7 +125,7 @@ export function Racket() {
       </mesh>
 
       {/* 正面胶皮底部平切处标志性 ITTF 钢印标区域 (DHS 狂飙认证压痕) */}
-      <mesh position={[0, stampY, -0.0066]}>
+      <mesh position={[0, stampY, -0.0064]}>
         <planeGeometry args={[0.095, 0.01]} />
         <meshStandardMaterial color="#a7141d" roughness={0.4} />
       </mesh>
@@ -147,7 +147,7 @@ export function Racket() {
       </mesh>
 
       {/* 反面胶皮底部 ITTF 钢印标区域 */}
-      <mesh position={[0, stampY, 0.0066]} rotation={[0, Math.PI, 0]}>
+      <mesh position={[0, stampY, 0.0064]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[0.095, 0.01]} />
         <meshStandardMaterial color="#262626" roughness={0.4} />
       </mesh>
@@ -159,7 +159,7 @@ export function Racket() {
 
       {/* 7. 手柄握把贴片 (正反两面，经典红双喜红木底色 + 浅象牙双跑道条纹 + 椭圆水晶标) */}
       {/* 正面手柄 */}
-      <group position={[0, 0, -0.0067]}>
+      <group position={[0, 0, -0.007]}>
         <mesh geometry={geos.handleGeo} castShadow>
           <meshStandardMaterial color="#781d22" roughness={0.55} />
         </mesh>
@@ -199,7 +199,7 @@ export function Racket() {
       </group>
 
       {/* 反面手柄 */}
-      <group position={[0, 0, 0.0067]} rotation={[0, Math.PI, 0]}>
+      <group position={[0, 0, 0.007]} rotation={[0, Math.PI, 0]}>
         <mesh geometry={geos.handleGeo} castShadow>
           <meshStandardMaterial color="#781d22" roughness={0.55} />
         </mesh>
