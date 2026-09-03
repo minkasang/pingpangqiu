@@ -104,21 +104,24 @@ export const PHOTO_RUBBER_POINTS: [number, number][] = [
 ]
 
 /**
- * 照片逐点采样的纯木拍肩马鞍凹弧 [x, y]
+ * 经过精细打磨、G1 切线连续的纯木拍肩马鞍凹弧 [x, y]（彻底消除拐点小凸起与硌手台阶）
  */
 export const PHOTO_SHOULDER_POINTS: [number, number][] = [
   [0.0463, -0.0769],
-  [0.0441, -0.0797],
-  [0.0436, -0.0813],
-  [0.041, -0.083],
-  [0.0325, -0.0847],
-  [0.0281, -0.0863],
-  [0.0248, -0.088],
-  [0.0226, -0.0896],
-  [0.02, -0.0913],
-  [0.0175, -0.0929],
-  [0.0155, -0.0946],
-  [0.0142, -0.0962],
+  [0.0437, -0.0788],
+  [0.0409, -0.0804],
+  [0.0381, -0.0817],
+  [0.0351, -0.0828],
+  [0.0322, -0.0837],
+  [0.0293, -0.0846],
+  [0.0265, -0.0854],
+  [0.0239, -0.0863],
+  [0.0214, -0.0872],
+  [0.0192, -0.0883],
+  [0.0173, -0.0896],
+  [0.0157, -0.0911],
+  [0.0145, -0.093],
+  [0.0138, -0.0953],
   [0.0135, -0.098],
 ]
 
@@ -396,12 +399,12 @@ export function createRacketGeometries(grip: RacketGripType = 'shakehand'): Rack
   const rubberShape = createRubberShape()
   const handleShape = createHandleShape(grip)
 
-  // 1. 五层纯木底板：5.6mm 厚，带手工打磨倒圆角 (1.2mm)
+  // 1. 五层纯木底板：5.6mm 厚，带细腻微倒圆角 (0.6mm，与胶皮精准对齐)
   const bladeGeo = new ExtrudeGeometry(bladeShape, {
     depth: 0.0056,
     bevelEnabled: true,
-    bevelThickness: 0.0012,
-    bevelSize: 0.0012,
+    bevelThickness: 0.0008,
+    bevelSize: 0.0006,
     bevelSegments: 4,
   })
   bladeGeo.translate(0, 0, -0.0028)
